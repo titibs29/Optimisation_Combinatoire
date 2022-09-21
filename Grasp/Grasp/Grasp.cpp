@@ -2,10 +2,17 @@
 //
 
 #include <iostream>
+#include "meta.h"
+
+
 
 int main()
 {
     std::cout << "Hello World!\n";
+    // entre en trucmachin.in
+    // algooooooooo
+    // sortie en trucmachin.out (apres une minute)
+   
 }
 
 // Exécuter le programme : Ctrl+F5 ou menu Déboguer > Exécuter sans débogage
