@@ -4,13 +4,26 @@
 #include <iostream>
 #include "meta.h"
 
+struct output {
 
+};
 
 int main()
 {
     std::cout << "Hello World!\n";
-    // entre en trucmachin.in
+    // entree en trucmachin.in
+    // pour se simplifier la tache, nous allons entrer le set en brut, deja formate
+    
+    int nbCouv = 3;
+    int nbEmplacements = 4;
+    int impressions[] = { 4500, 9000, 16000 };
+    float coutImpression = 13.44;
+    float coutPlaques = 18676;
+
     // algooooooooo
+    
+    meta(nbCouv, nbEmplacements, impressions);
+
     // sortie en trucmachin.out (apres une minute)
    
 }

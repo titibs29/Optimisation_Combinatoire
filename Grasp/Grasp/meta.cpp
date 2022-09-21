@@ -1,5 +1,6 @@
 #include "meta.h"
 
-void meta(void) {
+void meta(int nbCouv, int nbEmplacements, int nbimpressions[]) {
+
 
 }

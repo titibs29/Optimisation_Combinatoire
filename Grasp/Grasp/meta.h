@@ -1,3 +1,3 @@
 #pragma once
 
-void meta(void);
+void meta(int, int, int[]);
