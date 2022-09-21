@@ -32,3 +32,9 @@
 *.app
 
 ~$TimeSheet.xlsx
+
+Grasp/.vs/
+
+Grasp/x64/
+
+Grasp/Grasp/x64/
