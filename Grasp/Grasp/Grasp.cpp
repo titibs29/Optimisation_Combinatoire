@@ -14,12 +14,18 @@ int main()
 
 }
 
+struct InputData {
+    int nbCouverture;
+    int nbEmplacement;
+    int nbImpressionParCouverture[125];
+    int coutImpression;
+    int coutFabrication;
+};
 
-
-struct Solution
+struct OutputData
 {
+    int nbPlaque;
     int nbImpressionParPlaques[10];
-    list<int> tabPlaques[10];
-
-
+    int tabPlaques[25][10];
+    int coutTotal;
 };
