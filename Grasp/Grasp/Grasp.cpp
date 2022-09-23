@@ -6,6 +6,7 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 /*
 struct InputData {
@@ -73,19 +74,31 @@ void ecriture(float* nbEmplacement, Solution* best, int* nbDataset) {
    
 }
 
-bool CheckValiditePlaque() {
+bool CheckValiditePlaque(Solution* current, int const& nbCouverture) {
 
+    std::vector<int> checkApparationNombre(nbCouverture,0);
+    for (int valeur : current->agencement)
+    {
+        checkApparationNombre[valeur] = 1;
+    }
+    if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
     return true;
+
+   
+    
 }
 
-bool CheckValiditeImpression(std::vector<int> nbImpressionParCouverture,Solution* current) {
-
-    for each (int var in nbImpressionParCouverture)
+bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
+    
+    std::vector<int> totalImpression(nbCouverture);
+    for(int valeur : current->agencement)
     {
-
+        totalImpression[valeur] += valeur * current->nbImpression[valeur / (int)*nbEmplacement];
     }
-    if(1 >= nbImpressionParCouverture[0])
-
+    for(int i; i<nbImpressionParCouverture.size();i++)
+    {
+        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
+    }
     return true;
 }
 
