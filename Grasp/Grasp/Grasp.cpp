@@ -82,10 +82,7 @@ bool CheckValiditePlaque(Solution* current, int const& nbCouverture) {
         checkApparationNombre[valeur] = 1;
     }
     if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
-    return true;
-
-   
-    
+    return true;  
 }
 
 bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
@@ -111,6 +108,19 @@ void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*c
     }
     current->coutTotal =  (nbImpression * *coutFeuille) + (nbPlaques * *coutPlaque) ;
     std::cout << *coutFeuille << std::endl;
+}
+
+void GenerationPlaques(Solution* current,int nbElementAGenerer, int* nbCouverture) {
+    for (int i = 0; i < nbElementAGenerer; i++) {
+        current->agencement[i] = rand() % *nbCouverture;
+    }
+}
+
+void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
+    for (int i = 0; i < nbPlaques; i++) {
+        current->nbImpression[i] = rand() % *maxImpression;
+    }
 }
 
 int main()
