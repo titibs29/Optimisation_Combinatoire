@@ -78,7 +78,13 @@ bool CheckValiditePlaque() {
     return true;
 }
 
-bool CheckValiditeImpression() {
+bool CheckValiditeImpression(std::vector<int> nbImpressionParCouverture,Solution* current) {
+
+    for each (int var in nbImpressionParCouverture)
+    {
+
+    }
+    if(1 >= nbImpressionParCouverture[0])
 
     return true;
 }
