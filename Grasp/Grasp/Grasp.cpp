@@ -6,14 +6,8 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <algorithm>
 
-using namespace std;
-
-struct Solution {
-    vector<int> agencement;
-    vector<int> nbImpression;
-    int coutTotal;
-};
 /*
 struct InputData {
     int nbCouverture;
@@ -32,14 +26,21 @@ struct OutputData
 };
 */
 
-void lecture(vector<float>* input, int* nbDataset) {
 
-    ifstream fichier("Dataset-Dev/I" + to_string(*nbDataset) + ".in");  //Ouverture d'un fichier en lecture
+struct Solution {
+    std::vector<int> agencement;
+    std::vector<int> nbImpression;
+    float coutTotal;
+};
+
+void lecture(std::vector<float>* input, int* nbDataset) {
+
+    std::ifstream fichier("Dataset-Dev/I" + std::to_string(*nbDataset) + ".in");  //Ouverture d'un fichier en lecture
 
     if (fichier)
     {
         //Tout est prêt pour la lecture.
-        string donnee;
+        std::string donnee;
 
         while(fichier >> donnee){
             input->push_back(stof(donnee));
@@ -48,53 +49,100 @@ void lecture(vector<float>* input, int* nbDataset) {
     }
     else
     {
-        cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << endl;
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << std::endl;
     }
 }
 
 void ecriture(float* nbEmplacement, Solution* best, int* nbDataset) {
-    ofstream fichier("output/O" + to_string(*nbDataset) + ".out");
+    std::ofstream fichier("output/O" + std::to_string(*nbDataset) + ".out");
     if (fichier)
     {
         int nbPlaques = best->agencement.size() % ((int)*nbEmplacement-1);
-        fichier << nbPlaques << endl;
-        for(int i = 0;i < nbPlaques;i++) fichier << best->nbImpression[i] << endl;
+        fichier << nbPlaques << std::endl;
+        for(int i = 0;i < nbPlaques;i++) fichier << best->nbImpression[i] << std::endl;
         for (int i = 0; i < best->agencement.size(); i++) {
             fichier << best->agencement[i];
-            if (i % (int)*nbEmplacement == ((int)*nbEmplacement - 1)) fichier << endl;
+            if (i % (int)*nbEmplacement == ((int)*nbEmplacement - 1)) fichier << std::endl;
             else fichier << ",";
         }
         fichier << best->coutTotal;
     }
     else
     {
-        cout << "ERREUR: Impossible d'ouvrir le fichier." << endl;
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
     }
    
+}
+
+bool CheckValiditePlaque(Solution* current, int const& nbCouverture) {
+
+    std::vector<int> checkApparationNombre(nbCouverture,0);
+    for (int valeur : current->agencement)
+    {
+        checkApparationNombre[valeur] = 1;
+    }
+    if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
+    return true;  
+}
+
+bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
+    
+    std::vector<int> totalImpression(nbCouverture);
+    for(int valeur : current->agencement)
+    {
+        totalImpression[valeur] += valeur * current->nbImpression[valeur / (int)*nbEmplacement];
+    }
+    for(int i; i<nbImpressionParCouverture.size();i++)
+    {
+        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
+    }
+    return true;
+}
+
+void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*coutPlaque) {
+    
+    int nbImpression = 0;
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement-1);
+    for (int i = 0; i < nbPlaques; i++) {
+        nbImpression += current->nbImpression[i];
+    }
+    current->coutTotal =  (nbImpression * *coutFeuille) + (nbPlaques * *coutPlaque) ;
+    std::cout << *coutFeuille << std::endl;
+}
+
+void GenerationPlaques(Solution* current,int nbElementAGenerer, int* nbCouverture) {
+    for (int i = 0; i < nbElementAGenerer; i++) {
+        current->agencement[i] = rand() % *nbCouverture;
+    }
+}
+
+void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
+    for (int i = 0; i < nbPlaques; i++) {
+        current->nbImpression[i] = rand() % *maxImpression;
+    }
 }
 
 int main()
 {
 
-    vector<float> inputData;
+    std::vector<float> inputData;
     Solution best;
+    Solution current;
     int nbdataset;
-    cout << "Quel dataset a tester ? : ";
-    cin >> nbdataset;
+    std::cout << "Quel dataset a tester ? : ";
+    std::cin >> nbdataset;
     lecture(&inputData, &nbdataset);
-    /*
     best.agencement.push_back(0);
     best.agencement.push_back(1);
     best.agencement.push_back(2);
     best.agencement.push_back(2);
-    best.agencement.push_back(0);
-    best.agencement.push_back(1);
-    best.agencement.push_back(2);
-    best.agencement.push_back(2);
-    best.nbImpression.push_back(5000);
-    best.nbImpression.push_back(5500);
-    best.coutTotal = 4555;
-    */
+    best.nbImpression.push_back(2);
+
+    
+    CalculCout(&best,&inputData[1], &inputData[inputData.size()-2], &inputData[inputData.size() - 1]);
+
+
     ecriture(&inputData[1], &best, &nbdataset);
 }
 
