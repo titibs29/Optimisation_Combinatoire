@@ -141,12 +141,12 @@ void ImpressionParPlaque(Solution* current, std::vector<float>* inputData, int c
         bufferIteration[current->agencement[i]] += 1;
     }
     for (int i = 0; i < bufferIteration.size(); i++) {
-        bufferIteration[i] = (int)inputData[2 + i] / bufferIteration[i];               //greedy
+        bufferIteration[i] = (int)inputData->at(2 + i) / bufferIteration[i];               //greedy
     }
     for (int i = 0; i < nbPlaques; i++) {
         for (int j = 0; j < *nbEmplacement; j++) {
-            if (current->nbImpression[nbPlaques] < bufferIteration[current->agencement[i * *nbEmplacement + j]]) {
-                current->nbImpression[nbPlaques] = bufferIteration[current->agencement[i * *nbEmplacement + j]];
+            if (current->nbImpression[nbPlaques] < bufferIteration[current->agencement[i * (*nbEmplacement) + j]]) {
+                current->nbImpression[nbPlaques] = bufferIteration[current->agencement[i * (*nbEmplacement) + j]];
             }
         }
     }
