@@ -8,6 +8,13 @@
 #include <string>
 #include <algorithm>
 
+
+struct Solution {
+    std::vector<int> agencement;
+    std::vector<int> nbImpression;
+    float coutTotal;
+};
+
 /*
 struct InputData {
     int nbCouverture;
@@ -26,12 +33,32 @@ struct OutputData
 };
 */
 
+/*
+ * INUTILISER POUR LE MOMENT
+ * 
+bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
+    
+    std::vector<int> totalImpression(nbCouverture);
+    for(int valeur : current->agencement)
+    {
+        totalImpression[valeur] += valeur * current->nbImpression[valeur / (int)*nbEmplacement];
+    }
+    for(int i; i<nbImpressionParCouverture.size();i++)
+    {
+        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
+    }
+    return true;
+}
 
-struct Solution {
-    std::vector<int> agencement;
-    std::vector<int> nbImpression;
-    float coutTotal;
-};
+void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
+    for (int i = 0; i < nbPlaques; i++) {
+        current->nbImpression[i] = rand() % *maxImpression;
+    }
+}
+*/
+
+
 
 void lecture(std::vector<float>* input, int* nbDataset) {
 
@@ -85,19 +112,7 @@ bool CheckValiditePlaque(Solution* current, int const& nbCouverture) {
     return true;  
 }
 
-bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
-    
-    std::vector<int> totalImpression(nbCouverture);
-    for(int valeur : current->agencement)
-    {
-        totalImpression[valeur] += valeur * current->nbImpression[valeur / (int)*nbEmplacement];
-    }
-    for(int i; i<nbImpressionParCouverture.size();i++)
-    {
-        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
-    }
-    return true;
-}
+
 
 void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*coutPlaque) {
     
@@ -116,12 +131,29 @@ void GenerationPlaques(Solution* current,int nbElementAGenerer, int* nbCouvertur
     }
 }
 
-void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
+
+
+void ImpressionParPlaque(Solution* current, std::vector<float>* inputData, int const& nbCouverture, float* nbEmplacement) {
+    std::vector<int> bufferIteration(nbCouverture);
+    int impressionPlaque;
     int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
-    for (int i = 0; i < nbPlaques; i++) {
-        current->nbImpression[i] = rand() % *maxImpression;
+    for (int i = 0; i < current->agencement.size(); i++) {
+        bufferIteration[current->agencement[i]] += 1;
     }
+    for (int i = 0; i < bufferIteration.size(); i++) {
+        bufferIteration[i] = (int)inputData[2 + i] / bufferIteration[i];               //greedy
+    }
+    for (int i = 0; i < nbPlaques; i++) {
+        for (int j = 0; j < *nbEmplacement; j++) {
+            if (current->nbImpression[nbPlaques] < bufferIteration[current->agencement[i * *nbEmplacement + j]]) {
+                current->nbImpression[nbPlaques] = bufferIteration[current->agencement[i * *nbEmplacement + j]];
+            }
+        }
+    }
+    
 }
+
+
 
 int main()
 {
