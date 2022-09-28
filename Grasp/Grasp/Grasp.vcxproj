@@ -129,10 +129,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Grasp.cpp" />
-    <ClCompile Include="meta.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="meta.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

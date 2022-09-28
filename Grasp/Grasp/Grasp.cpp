@@ -122,13 +122,12 @@ void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*c
         nbImpression += current->nbImpression[i];
     }
     current->coutTotal =  (nbImpression * *coutFeuille) + (nbPlaques * *coutPlaque) ;
-    std::cout << *coutFeuille << std::endl;
 }
 
-void GenerationPlaques(Solution* current,int nbPlaquesAGenerer, float* nbEmplacement, float* nbCouverture) {
-    for (int i = 0; nbPlaquesAGenerer; i++) {
-        for (int j = 0; j < *nbEmplacement; i++) {
-            current->agencement[i * (*nbEmplacement)+j] = rand() % (int)*nbCouverture;
+void GenerationPlaques(Solution* current,int nbPlaquesAGenerer, float* nbCouverture, float* nbEmplacement) {
+    for (int i = 0; i < nbPlaquesAGenerer; i++) {
+        for (int j = 0; j < *nbEmplacement; j++) {
+            current->agencement[(i * (*nbEmplacement))+j] = rand() % (int)*nbCouverture;
         }
     }
 }
@@ -147,12 +146,23 @@ void ImpressionParPlaque(Solution* current, std::vector<float>* inputData, int c
     }
     for (int i = 0; i < nbPlaques; i++) {
         for (int j = 0; j < *nbEmplacement; j++) {
-            if (current->nbImpression[nbPlaques] < bufferIteration[current->agencement[i * (*nbEmplacement) + j]]) {
-                current->nbImpression[nbPlaques] = bufferIteration[current->agencement[i * (*nbEmplacement) + j]];
+            if (current->nbImpression[i] < bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]]) {
+                current->nbImpression[i] = bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]];
             }
         }
     }
     
+}
+
+void init(Solution* current, int nbPlaquesAndEmplacements, int nbPlaques) {
+    for (int i = 0; i < nbPlaquesAndEmplacements; i++) {
+
+        current->agencement.push_back(0);
+    }
+    for (int i = 0; i < nbPlaques; i++) {
+
+        current->nbImpression.push_back(0);
+    }
 }
 
 
@@ -164,19 +174,27 @@ int main()
     Solution best;
     Solution current;
     int nbdataset;
+
+
     std::cout << "Quel dataset a tester ? : ";
     std::cin >> nbdataset;
     lecture(&inputData, &nbdataset);
     
 
     /*PARTIE TEST*/
+    int nbPlaques = 2;
+
+    init(&current, nbPlaques * inputData[1], nbPlaques);
 
     do { 
-        GenerationPlaques(&current, 2, &inputData[0], &inputData[1]); 
+        GenerationPlaques(&current, nbPlaques, &inputData[0], &inputData[1]); 
+
     } while (!CheckValiditePlaque(&current, inputData[0]));
 
     ImpressionParPlaque(&current, &inputData, inputData[0], &inputData[1]);  
     CalculCout(&current,&inputData[1], &inputData[inputData.size()-2], &inputData[inputData.size() - 1]);
+
     ecriture(&inputData[1], &current, &nbdataset);
+    
 }
 
