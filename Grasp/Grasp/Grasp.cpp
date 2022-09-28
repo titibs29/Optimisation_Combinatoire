@@ -125,9 +125,11 @@ void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*c
     std::cout << *coutFeuille << std::endl;
 }
 
-void GenerationPlaques(Solution* current,int nbElementAGenerer, int* nbCouverture) {
-    for (int i = 0; i < nbElementAGenerer; i++) {
-        current->agencement[i] = rand() % *nbCouverture;
+void GenerationPlaques(Solution* current,int nbPlaquesAGenerer, float* nbEmplacement, float* nbCouverture) {
+    for (int i = 0; nbPlaquesAGenerer; i++) {
+        for (int j = 0; j < *nbEmplacement; i++) {
+            current->agencement[i * (*nbEmplacement)+j] = rand() % (int)*nbCouverture;
+        }
     }
 }
 
@@ -157,7 +159,7 @@ void ImpressionParPlaque(Solution* current, std::vector<float>* inputData, int c
 
 int main()
 {
-
+    //PARAMETRE D'ARGUMENT (main) pas oublié
     std::vector<float> inputData;
     Solution best;
     Solution current;
@@ -165,16 +167,16 @@ int main()
     std::cout << "Quel dataset a tester ? : ";
     std::cin >> nbdataset;
     lecture(&inputData, &nbdataset);
-    best.agencement.push_back(0);
-    best.agencement.push_back(1);
-    best.agencement.push_back(2);
-    best.agencement.push_back(2);
-    best.nbImpression.push_back(2);
-
     
-    CalculCout(&best,&inputData[1], &inputData[inputData.size()-2], &inputData[inputData.size() - 1]);
 
+    /*PARTIE TEST*/
 
-    ecriture(&inputData[1], &best, &nbdataset);
+    do { 
+        GenerationPlaques(&current, 2, &inputData[0], &inputData[1]); 
+    } while (!CheckValiditePlaque(&current, inputData[0]));
+
+    ImpressionParPlaque(&current, &inputData, inputData[0], &inputData[1]);  
+    CalculCout(&current,&inputData[1], &inputData[inputData.size()-2], &inputData[inputData.size() - 1]);
+    ecriture(&inputData[1], &current, &nbdataset);
 }
 

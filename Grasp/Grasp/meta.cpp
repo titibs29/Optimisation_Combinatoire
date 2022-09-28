@@ -4,3 +4,7 @@ void meta(int nbCouv, int nbEmplacements, int nbimpressions[]) {
 
 
 }
+
+void ImpressionParPlaque(Solution) {
+
+}
