@@ -2,39 +2,147 @@
 //
 
 #include <iostream>
-#include "meta.h"
+#include <fstream>
+#include <list>
+#include <vector>
+#include <string>
+#include <algorithm>
 
-struct output {
-
+/*
+struct InputData {
+    int nbCouverture;
+    int nbEmplacement;
+    vector<int> nbImpressionParCouverture;
+    int coutImpression;
+    int coutFabrication;
 };
 
-int main()
+struct OutputData
 {
-    std::cout << "Hello World!\n";
-    // entree en trucmachin.in
-    // pour se simplifier la tache, nous allons entrer le set en brut, deja formate
-    
-    int nbCouv = 3;
-    int nbEmplacements = 4;
-    int impressions[] = { 4500, 9000, 16000 };
-    float coutImpression = 13.44;
-    float coutPlaques = 18676;
+    int nbPlaque;
+    vector<int> nbImpressionParPlaques;
+    vector<int> tabPlaques;
+    int coutTotal;
+};
+*/
 
-    // algooooooooo
-    
-    meta(nbCouv, nbEmplacements, impressions);
 
-    // sortie en trucmachin.out (apres une minute)
+struct Solution {
+    std::vector<int> agencement;
+    std::vector<int> nbImpression;
+    float coutTotal;
+};
+
+void lecture(std::vector<float>* input, int* nbDataset) {
+
+    std::ifstream fichier("Dataset-Dev/I" + std::to_string(*nbDataset) + ".in");  //Ouverture d'un fichier en lecture
+
+    if (fichier)
+    {
+        //Tout est prêt pour la lecture.
+        std::string donnee;
+
+        while(fichier >> donnee){
+            input->push_back(stof(donnee));
+        }
+        
+    }
+    else
+    {
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier en lecture." << std::endl;
+    }
+}
+
+void ecriture(float* nbEmplacement, Solution* best, int* nbDataset) {
+    std::ofstream fichier("output/O" + std::to_string(*nbDataset) + ".out");
+    if (fichier)
+    {
+        int nbPlaques = best->agencement.size() % ((int)*nbEmplacement-1);
+        fichier << nbPlaques << std::endl;
+        for(int i = 0;i < nbPlaques;i++) fichier << best->nbImpression[i] << std::endl;
+        for (int i = 0; i < best->agencement.size(); i++) {
+            fichier << best->agencement[i];
+            if (i % (int)*nbEmplacement == ((int)*nbEmplacement - 1)) fichier << std::endl;
+            else fichier << ",";
+        }
+        fichier << best->coutTotal;
+    }
+    else
+    {
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
+    }
    
 }
 
-// Exécuter le programme : Ctrl+F5 ou menu Déboguer > Exécuter sans débogage
-// Déboguer le programme : F5 ou menu Déboguer > Démarrer le débogage
+bool CheckValiditePlaque(Solution* current, int const& nbCouverture) {
 
-// Astuces pour bien démarrer : 
-//   1. Utilisez la fenêtre Explorateur de solutions pour ajouter des fichiers et les gérer.
-//   2. Utilisez la fenêtre Team Explorer pour vous connecter au contrôle de code source.
-//   3. Utilisez la fenêtre Sortie pour voir la sortie de la génération et d'autres messages.
-//   4. Utilisez la fenêtre Liste d'erreurs pour voir les erreurs.
-//   5. Accédez à Projet > Ajouter un nouvel élément pour créer des fichiers de code, ou à Projet > Ajouter un élément existant pour ajouter des fichiers de code existants au projet.
-//   6. Pour rouvrir ce projet plus tard, accédez à Fichier > Ouvrir > Projet et sélectionnez le fichier .sln.
+    std::vector<int> checkApparationNombre(nbCouverture,0);
+    for (int valeur : current->agencement)
+    {
+        checkApparationNombre[valeur] = 1;
+    }
+    if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
+    return true;  
+}
+
+bool CheckValiditeImpression(std::vector<int> const&nbImpressionParCouverture,int const& nbCouverture,Solution* current, float* nbEmplacement) {
+    
+    std::vector<int> totalImpression(nbCouverture);
+    for(int valeur : current->agencement)
+    {
+        totalImpression[valeur] += valeur * current->nbImpression[valeur / (int)*nbEmplacement];
+    }
+    for(int i; i<nbImpressionParCouverture.size();i++)
+    {
+        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
+    }
+    return true;
+}
+
+void CalculCout(Solution* current, float*nbEmplacement,float*coutFeuille,float*coutPlaque) {
+    
+    int nbImpression = 0;
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement-1);
+    for (int i = 0; i < nbPlaques; i++) {
+        nbImpression += current->nbImpression[i];
+    }
+    current->coutTotal =  (nbImpression * *coutFeuille) + (nbPlaques * *coutPlaque) ;
+    std::cout << *coutFeuille << std::endl;
+}
+
+void GenerationPlaques(Solution* current,int nbElementAGenerer, int* nbCouverture) {
+    for (int i = 0; i < nbElementAGenerer; i++) {
+        current->agencement[i] = rand() % *nbCouverture;
+    }
+}
+
+void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
+    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
+    for (int i = 0; i < nbPlaques; i++) {
+        current->nbImpression[i] = rand() % *maxImpression;
+    }
+}
+
+int main()
+{
+
+    std::vector<float> inputData;
+    Solution best;
+    Solution current;
+    int nbdataset;
+    std::cout << "Quel dataset a tester ? : ";
+    std::cin >> nbdataset;
+    lecture(&inputData, &nbdataset);
+    best.agencement.push_back(0);
+    best.agencement.push_back(1);
+    best.agencement.push_back(2);
+    best.agencement.push_back(2);
+    best.nbImpression.push_back(2);
+
+    
+    CalculCout(&best,&inputData[1], &inputData[inputData.size()-2], &inputData[inputData.size() - 1]);
+
+
+    ecriture(&inputData[1], &best, &nbdataset);
+}
+
