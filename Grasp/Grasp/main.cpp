@@ -25,7 +25,7 @@ struct Solution {
 bool lecture(Entree * entree,unsigned int nbDataset);
 bool ecriture(unsigned int nbEmplacement, Solution* solution,unsigned int nbDataset);
 //void init(Solution* current, int nbPlaquesAndEmplacements, int nbPlaques);
-void ImpressionParPlaque(Solution* current, unsigned int const nbCouverture, unsigned int const nbEmplacement);
+void ImpressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int const nbCouverture, unsigned int const nbEmplacement);
 //void GenerationPlaques(Solution* current, int nbPlaquesAGenerer, float* nbCouverture, float* nbEmplacement);
 void CalculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
 //bool CheckValiditePlaque(Solution* current, int const& nbCouverture);
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
                            4, 4, 4, 4};
         best.coutTotal = 1915788;
 
-        ImpressionParPlaque(&current, &inputData, inputData[0], &inputData[1]);
+        ImpressionParPlaque(&current,entree.nbImpressionParCouverture, entree.nbCouverture, entree.nbEmplacement);
 
         CalculCout(&best, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
@@ -285,20 +285,23 @@ void GenerationPlaques(Solution* current,int nbPlaquesAGenerer, float* nbCouvert
 /// <param name="inputData"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void ImpressionParPlaque(Solution* current,unsigned int const nbCouverture,unsigned int const nbEmplacement) {
-    //creation du buffer de valeurs
-    std::vector<unsigned int> bufferIteration(nbCouverture);
-    int impressionPlaque = 0;
-    int nbPlaques = current->agencement.size() % (nbEmplacement - 1);
+void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int const nbCouverture,unsigned int const nbEmplacement) {
 
-    //lecture du nombre d'iteration dans
+    // creation du buffer de valeurs
+    std::vector<unsigned int> bufferIteration(nbCouverture);
+
+    // lecture du nombre d'iteration de chaque couverture dans les agancements
     for (int i = 0; i < current->agencement.size(); i++) {
         bufferIteration[current->agencement[i]] += 1;
     }
+
+    // division du nombre d'impression par le nombre d'iteration
     for (int i = 0; i < bufferIteration.size(); i++) {
-        bufferIteration[i] = (int)inputData->at(2 + i) / bufferIteration[i];               //greedy
+        bufferIteration[i] = ceil(nbImpressions[i] / bufferIteration[i]);
     }
-    for (int i = 0; i < nbPlaques; i++) {
+
+    // determination du nombre de passage minimum par chaque plaque
+    for (int i = 0; i < current->nbPlaques; i++) {
         for (int j = 0; j < nbEmplacement; j++) {
             if (current->nbImpression[i] < bufferIteration[current->agencement[(i * (nbEmplacement)) + j]]) {
                 current->nbImpression[i] = bufferIteration[current->agencement[(i * (nbEmplacement)) + j]];
