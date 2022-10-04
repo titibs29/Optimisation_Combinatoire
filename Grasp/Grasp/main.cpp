@@ -7,7 +7,7 @@
 #include <string>
 #include <chrono>
 
-#define RUNTIME 10000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 3000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
-        /* SETUP */
+        /* firstPass */
 
         do {
             /* LOOP */
