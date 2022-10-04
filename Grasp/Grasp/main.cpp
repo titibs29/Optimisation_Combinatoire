@@ -7,7 +7,7 @@
 #include <string>
 #include <chrono>
 
-#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -26,11 +26,11 @@ struct Solution {
 
 bool lecture(Entree * entree,unsigned int* nbDataset);
 bool ecriture(Solution* solution, unsigned int *nbEmplacement, unsigned int *nbDataset);
-void CalculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
-void ImpressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
-bool CheckValiditePlaque(Solution* current,unsigned int *nbCouverture);
-void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int *nbPlaques);
-void GenerationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement);
+void calculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
+void impressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
+bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture);
+void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques);
+void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 
 
 
@@ -70,23 +70,25 @@ int main(int argc, char* argv[])
         do {
             /* LOOP */
 
-            // monkey  search
+            // monkey search
             current.nbPlaques = rand() % entree.nbCouverture + 1;
-            init(&current, current.nbPlaques * entree.nbEmplacement, &current.nbPlaques);
+            init(&current, &entree.nbEmplacement, &current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
             do {
-               GenerationPlaques(&current, &entree.nbCouverture, &entree.nbEmplacement);
+
+                // monkey search
+                generationPlaques(&current, &entree.nbCouverture, &entree.nbEmplacement);
 
                plaquesGenerees += 1;    // stat
 
-            } while ( !CheckValiditePlaque(&current, &entree.nbCouverture));
+            } while ( !checkValiditePlaque(&current, &entree.nbCouverture));
             iterations += 1;    // stat
 
 
             // defini un nombre d'impression et calcule le cout de cette configuration
-            ImpressionParPlaque(&current,entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
-            CalculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+            impressionParPlaque(&current,entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
+            calculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
             // si meilleur, remplace le meilleur actuel
             if (current.coutTotal < best.coutTotal) {
@@ -184,9 +186,9 @@ bool lecture(Entree* entree, unsigned int* nbDataset) {
 /// <summary>
 /// permet d'ecrire le fichier de sortie
 /// </summary>
-/// <param name="nbEmplacement">nombre d'emplacement sur une plaque</param>
-/// <param name="best">solution a ecrire</param>
-/// <param name="nbDataset">numero du dataset en entree</param>
+/// <param name="solution"> solution a ecrire</param>
+/// <param name="nbEmplacement"> nombre d'emplacement sur une plaque</param>
+/// <param name="nbDataset"> numero du dataset en entree</param>
 bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbDataset) {
 
     std::ofstream fichier("output/O" + std::to_string(*nbDataset) + ".out");
@@ -226,7 +228,7 @@ bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbD
 /// <param name="nbEmplacement"></param>
 /// <param name="coutImpression"> cout par impression</param>
 /// <param name="coutFabrication"> cout par fabrication</param>
-void CalculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpression,float *coutFabrication) {
+void calculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpression,float *coutFabrication) {
     
     int nbImpressions = 0;
     for (unsigned int i = 0; i < current->nbPlaques; i++) {
@@ -239,10 +241,10 @@ void CalculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpress
 /// calcule le nombre d'impression de chaque plaques (non-optimise)
 /// </summary>
 /// <param name="current"></param>
-/// <param name="inputData"></param>
+/// <param name="nbImpressions"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
+void impressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
 
     // creation du buffer de valeurs
     std::vector<unsigned int> bufferIteration(*nbCouverture,0);
@@ -274,7 +276,7 @@ void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressi
 /// <param name="current"></param>
 /// <param name="nbCouverture"></param>
 /// <returns></returns>
-bool CheckValiditePlaque(Solution* current,unsigned int *nbCouverture) {
+bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture) {
 
     try {
 
@@ -301,10 +303,9 @@ bool CheckValiditePlaque(Solution* current,unsigned int *nbCouverture) {
 /// genere la structure des plaques aleatoirement
 /// </summary>
 /// <param name="current"></param>
-/// <param name="nbPlaquesAGenerer"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void GenerationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement) {
+void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement) {
 
     for (int i = 0; i < current->nbPlaques; i++) {
         for (int j = 0; j < *nbEmplacement; j++) {
@@ -316,16 +317,16 @@ void GenerationPlaques(Solution* current, unsigned int *nbCouverture, unsigned i
 
 
 /// <summary>
-/// setup initial 
+/// remplissage des tableaux de la solution de valeurs nulles 
 /// </summary>
 /// <param name="current"></param>
-/// <param name="nbPlaquesAndEmplacements"></param>
+/// <param name="nbEmplacements"></param>
 /// <param name="nbPlaques"></param>
-void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int *nbPlaques) {
+void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques) {
 
     // remplit la table agancement de valeurs nulles
     current->agencement.clear();
-    for (int i = 0; i < nbPlaquesAndEmplacements; i++) {
+    for (int i = 0; i < (current->nbPlaques * (*nbEmplacements)); i++) {
 
         current->agencement.push_back(0);
     }
