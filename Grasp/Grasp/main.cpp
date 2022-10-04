@@ -7,7 +7,7 @@
 #include <string>
 #include <chrono>
 
-#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -24,15 +24,13 @@ struct Solution {
     float coutTotal = 0.0;
 };
 
-bool lecture(Entree * entree,unsigned int nbDataset);
-bool ecriture(Solution* solution, unsigned int nbEmplacement, unsigned int nbDataset);
+bool lecture(Entree * entree,unsigned int* nbDataset);
+bool ecriture(Solution* solution, unsigned int *nbEmplacement, unsigned int *nbDataset);
 void CalculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
-void ImpressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int nbCouverture, unsigned int nbEmplacement);
-bool CheckValiditePlaque(Solution* current,unsigned int nbCouverture);
-void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int nbPlaques);
-void GenerationPlaques(Solution* current, unsigned int nbPlaquesAGenerer, unsigned int nbCouverture, unsigned int nbEmplacement);
-//void GenerationImpression(Solution* current, unsigned int nbEmplacement, unsigned int maxImpression);
-//bool CheckValiditeImpression(Solution* current, std::vector<unsigned int> nbImpressionParCouverture,unsigned int nbCouverture, unsigned int nbEmplacement);
+void ImpressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
+bool CheckValiditePlaque(Solution* current,unsigned int *nbCouverture);
+void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int *nbPlaques);
+void GenerationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 
 
 
@@ -57,7 +55,7 @@ int main(int argc, char* argv[])
         // recuperation des donnees dans le fichier en entree
         std::cout << "Quel dataset a tester ? : ";
         std::cin >> nbdataset;
-        fichierLu = lecture(&entree, nbdataset);
+        fichierLu = lecture(&entree, &nbdataset);
         if (!fichierLu)
             // si une erreur survient a l'ouverture
             throw 1;
@@ -69,29 +67,25 @@ int main(int argc, char* argv[])
         start = std::chrono::system_clock::now();
         /* FIRST PASS */
 
-        // Monkey search
-        int nbPlaques = 44;
-        init(&current, nbPlaques * entree.nbEmplacement, nbPlaques);
-
         do {
             /* LOOP */
 
             // monkey  search
             current.nbPlaques = rand() % entree.nbCouverture + 1;
-            init(&current, current.nbPlaques * entree.nbEmplacement, current.nbPlaques);
+            init(&current, current.nbPlaques * entree.nbEmplacement, &current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
             do {
-               GenerationPlaques(&current, current.nbPlaques, entree.nbCouverture, entree.nbEmplacement);
+               GenerationPlaques(&current, &entree.nbCouverture, &entree.nbEmplacement);
 
                plaquesGenerees += 1;    // stat
 
-            } while ( !CheckValiditePlaque(&current, entree.nbCouverture));
+            } while ( !CheckValiditePlaque(&current, &entree.nbCouverture));
             iterations += 1;    // stat
 
 
             // defini un nombre d'impression et calcule le cout de cette configuration
-            ImpressionParPlaque(&current,entree.nbImpressionParCouverture, entree.nbCouverture, entree.nbEmplacement);
+            ImpressionParPlaque(&current,entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
             CalculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
             // si meilleur, remplace le meilleur actuel
@@ -108,7 +102,7 @@ int main(int argc, char* argv[])
 
         // se finit si le temps depuis start est egal ou superieur a 60 secondes
         } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME);
-        std::cout << "temps ecoule" << std::endl;
+        std::cout << "fini !" << std::endl;
         std::cout << "nombres d'iterations dans la boucle: " << iterations << std::endl;
         std::cout << "nombre de plaques differentes generees: " << plaquesGenerees << std::endl;
         std::cout << "nombre de nouveau best realise: " << newBest << std::endl;
@@ -120,10 +114,10 @@ int main(int argc, char* argv[])
 
         /*-----FIN-----*/
         // ecriture du fichier de sortie
-        fichierEcrit = ecriture(&best, entree.nbEmplacement, nbdataset);
+        fichierEcrit = ecriture(&best, &entree.nbEmplacement, &nbdataset);
         if (!fichierEcrit)
             throw 99;
-        system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str());
+        system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
 
 
     }
@@ -146,9 +140,9 @@ int main(int argc, char* argv[])
 /// </summary>
 /// <param name="entree"> structure en entree de l'algo</param>
 /// <param name="nbDataset"> numero de dataset</param>
-bool lecture(Entree* entree, unsigned int nbDataset) {
+bool lecture(Entree* entree, unsigned int* nbDataset) {
 
-    std::ifstream fichier("Dataset-Dev/I" + std::to_string(nbDataset) + ".in");  //Ouverture d'un fichier en lecture
+    std::ifstream fichier("Dataset-Dev/I" + std::to_string(*nbDataset) + ".in");  //Ouverture d'un fichier en lecture
 
     if (fichier.is_open())
     {
@@ -193,9 +187,9 @@ bool lecture(Entree* entree, unsigned int nbDataset) {
 /// <param name="nbEmplacement">nombre d'emplacement sur une plaque</param>
 /// <param name="best">solution a ecrire</param>
 /// <param name="nbDataset">numero du dataset en entree</param>
-bool ecriture(Solution* solution, unsigned int nbEmplacement, unsigned int nbDataset) {
+bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbDataset) {
 
-    std::ofstream fichier("output/O" + std::to_string(nbDataset) + ".out");
+    std::ofstream fichier("output/O" + std::to_string(*nbDataset) + ".out");
     if (fichier.is_open())
     {
         // nombre de plaques
@@ -208,7 +202,7 @@ bool ecriture(Solution* solution, unsigned int nbEmplacement, unsigned int nbDat
         // les agencements de chaque plaque
         for (unsigned int i = 0; i < solution->agencement.size(); i++) {
             fichier << solution->agencement[i];
-            if (i % nbEmplacement == (nbEmplacement - 1)) fichier << std::endl;
+            if (i % *nbEmplacement == (*nbEmplacement - 1)) fichier << std::endl;
             else fichier << ", ";
         }
 
@@ -248,10 +242,10 @@ void CalculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpress
 /// <param name="inputData"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int nbCouverture,unsigned int nbEmplacement) {
+void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
 
     // creation du buffer de valeurs
-    std::vector<unsigned int> bufferIteration(nbCouverture,0);
+    std::vector<unsigned int> bufferIteration(*nbCouverture,0);
 
     // lecture du nombre d'iteration de chaque couverture dans les agancements
     for (int i = 0; i < current->agencement.size(); i++) {
@@ -265,9 +259,9 @@ void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressi
 
     // determination du nombre de passage minimum par chaque plaque
     for (int i = 0; i < current->nbPlaques; i++) {
-        for (int j = 0; j < nbEmplacement; j++) {
-            if (current->nbImpression[i] < bufferIteration[current->agencement[(i * (nbEmplacement)) + j]]) {
-                current->nbImpression[i] = bufferIteration[current->agencement[(i * (nbEmplacement)) + j]];
+        for (int j = 0; j < *nbEmplacement; j++) {
+            if (current->nbImpression[i] < bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]]) {
+                current->nbImpression[i] = bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]];
             }
         }
     }
@@ -280,11 +274,11 @@ void ImpressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressi
 /// <param name="current"></param>
 /// <param name="nbCouverture"></param>
 /// <returns></returns>
-bool CheckValiditePlaque(Solution* current,unsigned int const nbCouverture) {
+bool CheckValiditePlaque(Solution* current,unsigned int *nbCouverture) {
 
     try {
 
-    std::vector<bool> checkApparationNombre(nbCouverture);
+    std::vector<bool> checkApparationNombre(*nbCouverture);
 
     // boucle dans toutes les cases
     for (unsigned int valeur : current->agencement)
@@ -310,11 +304,11 @@ bool CheckValiditePlaque(Solution* current,unsigned int const nbCouverture) {
 /// <param name="nbPlaquesAGenerer"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void GenerationPlaques(Solution* current, unsigned int nbPlaquesAGenerer, unsigned int nbCouverture, unsigned int nbEmplacement) {
+void GenerationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement) {
 
-    for (int i = 0; i < nbPlaquesAGenerer; i++) {
-        for (int j = 0; j < nbEmplacement; j++) {
-            current->agencement[(i * (nbEmplacement))+j] = rand() % nbCouverture;
+    for (int i = 0; i < current->nbPlaques; i++) {
+        for (int j = 0; j < *nbEmplacement; j++) {
+            current->agencement[(i * (*nbEmplacement))+j] = rand() % *nbCouverture;
         }
     }
 }
@@ -327,7 +321,7 @@ void GenerationPlaques(Solution* current, unsigned int nbPlaquesAGenerer, unsign
 /// <param name="current"></param>
 /// <param name="nbPlaquesAndEmplacements"></param>
 /// <param name="nbPlaques"></param>
-void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int nbPlaques) {
+void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int *nbPlaques) {
 
     // remplit la table agancement de valeurs nulles
     current->agencement.clear();
@@ -338,49 +332,10 @@ void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int
 
     // remplit la table nbImpression de valeurs nulles
     current->nbImpression.clear();
-    for (int i = 0; i < nbPlaques; i++) {
+    for (int i = 0; i < *nbPlaques; i++) {
 
         current->nbImpression.push_back(0);
     }
 
-    current->nbPlaques = nbPlaques;
+    current->nbPlaques = *nbPlaques;
 }
-
-
-//
-///// <summary>
-///// permet de valider si le nombre d'impressions nous permet d'avoir assez de couvertures
-///// </summary>
-///// <param name="nbImpressionParCouverture"></param>
-///// <param name="nbCouverture"></param>
-///// <param name="current"></param>
-///// <param name="nbEmplacement"></param>
-///// <returns></returns>
-//bool CheckValiditeImpression(std::vector<unsigned int> const&nbImpressionParCouverture,unsigned int const& nbCouverture,Solution* current, unsigned int nbEmplacement) {
-//    
-//    std::vector<unsigned int> totalImpression(nbCouverture);
-//    for(int valeur : current->agencement)
-//    {
-//        totalImpression[valeur] += valeur * current->nbImpression[valeur / nbEmplacement];
-//    }
-//    for(unsigned int i=0; i < unsigned(nbImpressionParCouverture.size());i++)
-//    {
-//        if (totalImpression[i] < nbImpressionParCouverture[i])return false;
-//    }
-//    return true;
-//}
-//
-//
-///// <summary>
-///// permet de generer aleatoirement le nombre d'impressions
-///// </summary>
-///// <param name="current"></param>
-///// <param name="nbEmplacement"></param>
-///// <param name="maxImpression"></param>
-//void GenerationImpression(Solution* current, float* nbEmplacement,int* maxImpression) {
-//    int nbPlaques = current->agencement.size() % ((int)*nbEmplacement - 1);
-//    for (int i = 0; i < nbPlaques; i++) {
-//        current->nbImpression[i] = rand() % *maxImpression;
-//    }
-//}
-//
