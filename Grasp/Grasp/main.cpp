@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
             /* LOOP */
 
             // monkey search
-            current.nbPlaques = rand() % entree.nbCouverture + 1;
+            current.nbPlaques = rand() % entree.nbCouverture + 1;      // TODO - changer le 1 pour le nombre minimum de plaques possible pour avoir une copie de chaque couverture
             init(&current, &entree.nbEmplacement, &current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
