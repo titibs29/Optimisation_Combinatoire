@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
             /* LOOP */
 
             // generation aleatoire d'un nombre de plaques
-            current.nbPlaques = 2;
+            current.nbPlaques = rand() % 10 + 1;
             init(&current, current.nbPlaques * entree.nbEmplacement, current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 
             // si meilleur, remplace le meilleur actuel
             if (current.coutTotal < best.coutTotal) {
-                std::cout << "nouveau meilleur resultat" << std::endl;
+
                 newBest += 1;
                 best.nbPlaques = current.nbPlaques;
                 best.agencement.clear();
@@ -325,12 +325,14 @@ void GenerationPlaques(Solution* current, unsigned int nbPlaquesAGenerer, unsign
 void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int nbPlaques) {
 
     // remplit la table agancement de valeurs nulles
+    current->agencement.clear();
     for (int i = 0; i < nbPlaquesAndEmplacements; i++) {
 
         current->agencement.push_back(0);
     }
 
     // remplit la table nbImpression de valeurs nulles
+    current->nbImpression.clear();
     for (int i = 0; i < nbPlaques; i++) {
 
         current->nbImpression.push_back(0);
