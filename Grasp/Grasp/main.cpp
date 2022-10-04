@@ -7,7 +7,7 @@
 #include <string>
 #include <chrono>
 
-#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -62,30 +62,34 @@ int main(int argc, char* argv[])
             // si une erreur survient a l'ouverture
             throw 1;
 
-        // remplissage de donnees nulles en sortie
-        int nbPlaques = 44;
-        init(&best, nbPlaques * entree.nbEmplacement, nbPlaques);
-        init(&current, nbPlaques * entree.nbEmplacement, nbPlaques);
+        // attribution de la valeur la plus importante possible a best
         best.coutTotal = INT_MAX;
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
         /* FIRST PASS */
 
+        // Monkey search
+        int nbPlaques = 44;
+        init(&current, nbPlaques * entree.nbEmplacement, nbPlaques);
+
         do {
             /* LOOP */
 
-            // generation aleatoire d'un nombre de plaques
-            current.nbPlaques = rand() % 10 + 1;
+            // monkey  search
+            current.nbPlaques = rand() % entree.nbCouverture + 1;
             init(&current, current.nbPlaques * entree.nbEmplacement, current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
             do {
                GenerationPlaques(&current, current.nbPlaques, entree.nbCouverture, entree.nbEmplacement);
-               plaquesGenerees += 1;
+
+               plaquesGenerees += 1;    // stat
 
             } while ( !CheckValiditePlaque(&current, entree.nbCouverture));
-            iterations += 1;
+            iterations += 1;    // stat
+
+
             // defini un nombre d'impression et calcule le cout de cette configuration
             ImpressionParPlaque(&current,entree.nbImpressionParCouverture, entree.nbCouverture, entree.nbEmplacement);
             CalculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
@@ -93,7 +97,7 @@ int main(int argc, char* argv[])
             // si meilleur, remplace le meilleur actuel
             if (current.coutTotal < best.coutTotal) {
 
-                newBest += 1;
+                newBest += 1;   // stat
                 best.nbPlaques = current.nbPlaques;
                 best.agencement.clear();
                 best.agencement.assign(current.agencement.begin(), current.agencement.end());
@@ -119,6 +123,7 @@ int main(int argc, char* argv[])
         fichierEcrit = ecriture(&best, entree.nbEmplacement, nbdataset);
         if (!fichierEcrit)
             throw 99;
+        system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str());
 
 
     }
