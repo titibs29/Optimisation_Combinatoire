@@ -7,7 +7,7 @@
 #include <string>
 #include <chrono>
 
-#define RUNTIME 3000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -63,21 +63,25 @@ int main(int argc, char* argv[])
             throw 1;
 
         // remplissage de donnees nulles en sortie
-        int nbPlaques = 2;
+        int nbPlaques = 44;
         init(&best, nbPlaques * entree.nbEmplacement, nbPlaques);
         init(&current, nbPlaques * entree.nbEmplacement, nbPlaques);
         best.coutTotal = INT_MAX;
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
-        /* firstPass */
+        /* FIRST PASS */
 
         do {
             /* LOOP */
 
+            // generation aleatoire d'un nombre de plaques
+            current.nbPlaques = 2;
+            init(&current, current.nbPlaques * entree.nbEmplacement, current.nbPlaques);
+
             // cette boucle genere un set et finit quand elle a un set valide
             do {
-               GenerationPlaques(&current, nbPlaques, entree.nbCouverture, entree.nbEmplacement);
+               GenerationPlaques(&current, current.nbPlaques, entree.nbCouverture, entree.nbEmplacement);
                plaquesGenerees += 1;
 
             } while ( !CheckValiditePlaque(&current, entree.nbCouverture));
@@ -88,9 +92,12 @@ int main(int argc, char* argv[])
 
             // si meilleur, remplace le meilleur actuel
             if (current.coutTotal < best.coutTotal) {
+                std::cout << "nouveau meilleur resultat" << std::endl;
                 newBest += 1;
                 best.nbPlaques = current.nbPlaques;
+                best.agencement.clear();
                 best.agencement.assign(current.agencement.begin(), current.agencement.end());
+                best.nbImpression.clear();
                 best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
                 best.coutTotal = current.coutTotal;
             }
@@ -328,6 +335,8 @@ void init(Solution* current, unsigned int nbPlaquesAndEmplacements, unsigned int
 
         current->nbImpression.push_back(0);
     }
+
+    current->nbPlaques = nbPlaques;
 }
 
 
