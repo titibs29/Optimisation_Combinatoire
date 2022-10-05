@@ -95,9 +95,7 @@ int main(int argc, char* argv[])
 
                 newBest += 1;   // stat
                 best.nbPlaques = current.nbPlaques;
-                best.agencement.clear();
                 best.agencement.assign(current.agencement.begin(), current.agencement.end());
-                best.nbImpression.clear();
                 best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
                 best.coutTotal = current.coutTotal;
             }
@@ -325,18 +323,10 @@ void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned i
 void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques) {
 
     // remplit la table agancement de valeurs nulles
-    current->agencement.clear();
-    for (int i = 0; i < (current->nbPlaques * (*nbEmplacements)); i++) {
-
-        current->agencement.push_back(0);
-    }
+    current->agencement.assign(current->nbPlaques * (*nbEmplacements), 0);
 
     // remplit la table nbImpression de valeurs nulles
-    current->nbImpression.clear();
-    for (int i = 0; i < *nbPlaques; i++) {
-
-        current->nbImpression.push_back(0);
-    }
+    current->nbImpression.assign(*nbPlaques, 0);
 
     current->nbPlaques = *nbPlaques;
 }
