@@ -4,10 +4,10 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>
+#include <string>   
 #include <chrono>
 
-#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 5000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -38,6 +38,9 @@ void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned i
 
 int main(int argc, char* argv[])
 {
+
+    
+
     try{
         /*-----SETUP-----*/
         //declarations
@@ -64,13 +67,18 @@ int main(int argc, char* argv[])
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
+
+        int nb_min_plaque = entree.nbCouverture / entree.nbEmplacement;
+        if (entree.nbCouverture % entree.nbEmplacement != 0) {
+            nb_min_plaque += 1;
+        }
         /* FIRST PASS */
 
         do {
             /* LOOP */
 
             // monkey search
-            current.nbPlaques = rand() % entree.nbCouverture + 1;      // TODO - changer le 1 pour le nombre minimum de plaques possible pour avoir une copie de chaque couverture
+            current.nbPlaques = rand() % (entree.nbCouverture - nb_min_plaque) + nb_min_plaque + 1;      // TODO - changer le 1 pour le nombre minimum de plaques possible pour avoir une copie de chaque couverture
             init(&current, &entree.nbEmplacement, &current.nbPlaques);
 
             // cette boucle genere un set et finit quand elle a un set valide
@@ -98,7 +106,6 @@ int main(int argc, char* argv[])
                 best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
                 best.coutTotal = current.coutTotal;
             }
-
         // se finit si le temps depuis start est egal ou superieur a 60 secondes
         } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME);
         std::cout << "fini !" << std::endl;
@@ -302,7 +309,6 @@ bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture) {
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
 void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement) {
-
     for (int i = 0; i < current->nbPlaques; i++) {
         for (int j = 0; j < *nbEmplacement; j++) {
             current->agencement[(i * (*nbEmplacement))+j] = rand() % *nbCouverture;
