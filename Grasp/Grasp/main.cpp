@@ -8,7 +8,7 @@
 #include <chrono>
 #include <map>
 
-#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -33,6 +33,7 @@ bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture);
 void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques);
 void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
+void SwitchAgencement(Solution* current);
 
 
 
@@ -95,19 +96,21 @@ int main(int argc, char* argv[])
             } while ( !checkValiditePlaque(&current, &entree.nbCouverture));
             iterations += 1;    // stat
 
+            for(int i = 0; i < 10; i++){
+                // defini un nombre d'impression et calcule le cout de cette configuration
+                impressionParPlaque(&current,&entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
+                calculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
-            // defini un nombre d'impression et calcule le cout de cette configuration
-            impressionParPlaque(&current,&entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
-            calculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+                // si meilleur, remplace le meilleur actuel
+                if (current.coutTotal < best.coutTotal) {
 
-            // si meilleur, remplace le meilleur actuel
-            if (current.coutTotal < best.coutTotal) {
-
-                newBest += 1;   // stat
-                best.nbPlaques = current.nbPlaques;
-                best.agencement.assign(current.agencement.begin(), current.agencement.end());
-                best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
-                best.coutTotal = current.coutTotal;
+                    newBest += 1;   // stat
+                    best.nbPlaques = current.nbPlaques;
+                    best.agencement.assign(current.agencement.begin(), current.agencement.end());
+                    best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
+                    best.coutTotal = current.coutTotal;
+                }
+                SwitchAgencement(&current);
             }
         // se finit si le temps depuis start est egal ou superieur a 60 secondes
         } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME);
@@ -389,3 +392,19 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
     }
 }
 
+void SwitchAgencement(Solution* current) {
+    int temp = 0;
+    int rand1 = 0;
+    int rand2 = 0;
+    int taille = current->agencement.size();
+    
+    rand1 = rand() % taille;
+    rand2 = rand() % taille;
+    if (rand1 == rand2) {
+        if (rand1 == taille - 1)rand2--;
+        else rand2++;
+    }
+    temp = current->agencement.at(rand1);
+    current->agencement.at(rand1) = current->agencement.at(rand2);
+    current->agencement.at(rand2) = temp;
+}
