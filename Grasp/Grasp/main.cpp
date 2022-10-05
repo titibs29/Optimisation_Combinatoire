@@ -8,7 +8,7 @@
 #include <chrono>
 #include <map>
 
-#define RUNTIME 5000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -111,14 +111,17 @@ int main(int argc, char* argv[])
             }
         // se finit si le temps depuis start est egal ou superieur a 60 secondes
         } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME);
+        
+        int nbImpressions = 0;
+        for (unsigned int i = 0; i < best.nbPlaques; i++) {
+            nbImpressions += best.nbImpression[i];
+        }
+
         std::cout << "fini !" << std::endl;
         std::cout << "nombres d'iterations dans la boucle: " << iterations << std::endl;
         std::cout << "nombre de plaques differentes generees: " << plaquesGenerees << std::endl;
         std::cout << "nombre de nouveau best realise: " << newBest << std::endl;
 
-
-
-        
 
 
         /*-----FIN-----*/
@@ -178,7 +181,7 @@ bool lecture(Entree* entree, unsigned int* nbDataset) {
         // on subdivise la dernière ligne
         int taillePremier = inputData.back().find(" ");
         entree->coutImpression = stof(inputData.back().substr(0, taillePremier));
-        entree->coutFabrication = stof(inputData.back().substr(taillePremier+2, inputData.back().find(" ")));
+        entree->coutFabrication = stof(inputData.back().substr(taillePremier+1, inputData.back().find(" ")));
 
         return 1;
     }
@@ -240,6 +243,7 @@ void calculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpress
     for (unsigned int i = 0; i < current->nbPlaques; i++) {
         nbImpressions += current->nbImpression[i];
     }
+
     current->coutTotal =  (nbImpressions * *coutImpression) + (current->nbPlaques * *coutFabrication) ;
 }
 
