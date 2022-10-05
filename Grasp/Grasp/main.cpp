@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <map>
 
 #define RUNTIME 6000000    // temps de la boucle (1 min = 60000000)
 
@@ -30,27 +31,29 @@ void calculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuill
 void impressionParPlaque(Solution* current,std::vector<unsigned int>* nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture);
 void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques);
-void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement);
-
+void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int *nbCouverture, unsigned int *nbEmplacement);
+void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
 
 
 
 
 int main(int argc, char* argv[])
 {
+    /*-----SETUP-----*/
+    //declarations
+    unsigned int nbdataset;
+    unsigned long int iterations = 1, plaquesGenerees = 0, newBest = 0;
+    bool fichierLu, fichierEcrit;
+    Entree entree;
+    Solution current, best;
+    // gestion du temps
+    std::chrono::time_point<std::chrono::system_clock> start;
+    unsigned long int microseconds = 0;
+    std::vector<std::vector<int>> listCandidate[10];
+    std::vector<float> poidsImpression; // A INIT
+
+
     try{
-        /*-----SETUP-----*/
-        //declarations
-        unsigned int nbdataset;
-        unsigned long int iterations = 1, plaquesGenerees = 0, newBest = 0;
-        bool fichierLu, fichierEcrit;
-        Entree entree;
-        Solution current, best;
-
-        // gestion du temps
-        std::chrono::time_point<std::chrono::system_clock> start;
-        unsigned long int microseconds = 0;
-
 
         // recuperation des donnees dans le fichier en entree
         std::cout << "Quel dataset a tester ? : ";
@@ -65,6 +68,9 @@ int main(int argc, char* argv[])
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
         /* FIRST PASS */
+        //Initialisation du vector
+        poidsImpression.assign(entree.nbImpressionParCouverture.size(), 0);
+        TableauPoids(&entree.nbImpressionParCouverture, &poidsImpression);
 
         do {
             /* LOOP */
@@ -77,9 +83,9 @@ int main(int argc, char* argv[])
             do {
 
                 // monkey search
-                generationPlaques(&current, &entree.nbCouverture, &entree.nbEmplacement);
+                generationPlaques(&current, poidsImpression, &entree.nbCouverture, &entree.nbEmplacement);
 
-               plaquesGenerees += 1;    // stat
+                plaquesGenerees += 1;    // stat
 
             } while ( !checkValiditePlaque(&current, &entree.nbCouverture));
             iterations += 1;    // stat
@@ -295,17 +301,46 @@ bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture) {
 }
 
 
-/// <summary>
-/// genere la structure des plaques aleatoirement
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbCouverture"></param>
-/// <param name="nbEmplacement"></param>
-void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement) {
 
+void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement) {
+
+    int c1 = 0;
+    int c2 = 0;
+    float reduction = 1.0f / (float)(*nbEmplacement * current->nbPlaques);
+    
     for (int i = 0; i < current->nbPlaques; i++) {
         for (int j = 0; j < *nbEmplacement; j++) {
-            current->agencement[(i * (*nbEmplacement))+j] = rand() % *nbCouverture;
+
+            // peuplement des deux premiers
+            if (poidsImpression[1] < poidsImpression[0]) {
+                c1 = 0;
+                c2 = 1;
+            }
+            else {
+                c1 = 1;
+                c2 = 0;
+            }
+
+            //recherche des 2 meilleurs candidats
+            for (int x = 2; x < poidsImpression.size(); x++) {
+                if (poidsImpression[c2] < poidsImpression[x]) {
+                    if (poidsImpression[c1] < poidsImpression[x]) {
+                        c2 = c1;
+                        c1 = x;
+                    }
+                    else {
+                        c2 = x;
+                    }
+                }
+            }
+            if (rand() % 2) {
+                current->agencement[(i * (*nbEmplacement)) + j] = c2;
+                poidsImpression[c2] -= reduction;
+            }
+            else {
+                current->agencement[(i * (*nbEmplacement)) + j] = c1;
+                poidsImpression[c1] -= reduction;
+            }
         }
     }
 }
@@ -328,3 +363,21 @@ void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaqu
 
     current->nbPlaques = *nbPlaques;
 }
+
+/// <summary>
+/// remplissage des tableaux de la solution de valeurs nulles 
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbEmplacements"></param>
+/// <param name="nbPlaques"></param>
+void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression) {
+    
+    float total = 0;
+    for (int valeur : *nbImpression) {
+        total += valeur;
+    }
+    for (int i = 0; i < nbImpression->size();i++ ) {
+        poidsImpression->at(i) += nbImpression->at(i) / total;
+    }
+}
+
