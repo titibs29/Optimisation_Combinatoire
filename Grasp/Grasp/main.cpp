@@ -27,7 +27,7 @@ struct Solution {
 bool lecture(Entree * entree,unsigned int* nbDataset);
 bool ecriture(Solution* solution, unsigned int *nbEmplacement, unsigned int *nbDataset);
 void calculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
-void impressionParPlaque(Solution* current,std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
+void impressionParPlaque(Solution* current,std::vector<unsigned int>* nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture);
 void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques);
 void generationPlaques(Solution* current, unsigned int *nbCouverture, unsigned int *nbEmplacement);
@@ -56,9 +56,8 @@ int main(int argc, char* argv[])
         std::cout << "Quel dataset a tester ? : ";
         std::cin >> nbdataset;
         fichierLu = lecture(&entree, &nbdataset);
-        if (!fichierLu)
-            // si une erreur survient a l'ouverture
-            throw 1;
+        // si une erreur survient a l'ouverture
+        if (!fichierLu) throw 1;
 
         // attribution de la valeur la plus importante possible a best
         best.coutTotal = INT_MAX;
@@ -87,7 +86,7 @@ int main(int argc, char* argv[])
 
 
             // defini un nombre d'impression et calcule le cout de cette configuration
-            impressionParPlaque(&current,entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
+            impressionParPlaque(&current,&entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
             calculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
             // si meilleur, remplace le meilleur actuel
@@ -115,8 +114,7 @@ int main(int argc, char* argv[])
         /*-----FIN-----*/
         // ecriture du fichier de sortie
         fichierEcrit = ecriture(&best, &entree.nbEmplacement, &nbdataset);
-        if (!fichierEcrit)
-            throw 99;
+        if (!fichierEcrit) throw 99;
         system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
 
 
@@ -242,7 +240,7 @@ void calculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpress
 /// <param name="nbImpressions"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void impressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
+void impressionParPlaque(Solution* current, std::vector<unsigned int>* nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
 
     // creation du buffer de valeurs
     std::vector<unsigned int> bufferIteration(*nbCouverture,0);
@@ -254,7 +252,7 @@ void impressionParPlaque(Solution* current, std::vector<unsigned int> nbImpressi
 
     // division du nombre d'impression par le nombre d'iteration
     for (int i = 0; i < bufferIteration.size(); i++) {
-        bufferIteration[i] = ceil(nbImpressions[i] / bufferIteration[i]);
+        bufferIteration[i] = ceil(nbImpressions->at(i) / bufferIteration[i]);
     }
 
     // determination du nombre de passage minimum par chaque plaque
