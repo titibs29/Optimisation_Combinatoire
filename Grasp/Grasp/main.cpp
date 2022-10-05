@@ -113,19 +113,12 @@ int main(int argc, char* argv[])
         for (unsigned int i = 0; i < best.nbPlaques; i++) {
             nbImpressions += best.nbImpression[i];
         }
-        std::cout << nbImpressions << std::endl;
 
-        std::cout << best.nbPlaques << std::endl;
-        
-        
         std::cout << "fini !" << std::endl;
         std::cout << "nombres d'iterations dans la boucle: " << iterations << std::endl;
         std::cout << "nombre de plaques differentes generees: " << plaquesGenerees << std::endl;
         std::cout << "nombre de nouveau best realise: " << newBest << std::endl;
 
-
-
-        
 
 
         /*-----FIN-----*/
@@ -247,9 +240,6 @@ void calculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpress
     for (unsigned int i = 0; i < current->nbPlaques; i++) {
         nbImpressions += current->nbImpression[i];
     }
-
-    std::cout << *coutImpression << std::endl;
-    std::cout << *coutFabrication << std::endl;
 
     current->coutTotal =  (nbImpressions * *coutImpression) + (current->nbPlaques * *coutFabrication) ;
 }
