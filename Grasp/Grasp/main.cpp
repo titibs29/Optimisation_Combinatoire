@@ -70,6 +70,9 @@ int main(int argc, char* argv[])
         // nombre minimum de plaque pour avoir toutes les couvertures
         int nb_min_plaque = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
 
+        // nombre minimum de plaque pour avoir toutes les couvertures
+        int nb_min_plaque = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
+
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
 
@@ -83,7 +86,7 @@ int main(int argc, char* argv[])
             /* LOOP */
 
             // monkey search
-            current.nbPlaques = rand() % entree.nbCouverture + nb_min_plaque ;      
+            current.nbPlaques = rand() % (entree.nbCouverture - nb_min_plaque) + nb_min_plaque ;      
             init(&current, &entree.nbEmplacement, &current.nbPlaques);
 
             std::cout << current.nbPlaques << std::endl;
