@@ -8,7 +8,7 @@
 #include <chrono>
 #include <map>
 
-#define RUNTIME 60000000    // temps de la boucle (1 min = 60000000)
+#define RUNTIME 15000000    // temps de la boucle (1 min = 60000000)
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -47,11 +47,12 @@ int main(int argc, char* argv[])
     bool fichierLu, fichierEcrit;
     Entree entree;
     Solution current, best;
+    std::vector<std::vector<int>> listCandidate[10];
+    std::vector<float> poidsImpression;
+
     // gestion du temps
     std::chrono::time_point<std::chrono::system_clock> start;
     unsigned long int microseconds = 0;
-    std::vector<std::vector<int>> listCandidate[10];
-    std::vector<float> poidsImpression; // A INIT
 
 
     try{
@@ -64,15 +65,15 @@ int main(int argc, char* argv[])
         if (!fichierLu) throw 1;
 
         // attribution de la valeur la plus importante possible a best
-        best.coutTotal = INT_MAX;
+        best.coutTotal = FLT_MAX;
+
+        // nombre minimum de plaque pour avoir toutes les couvertures
+        int nb_min_plaque = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
 
-        int nb_min_plaque = entree.nbCouverture / entree.nbEmplacement;
-        if (entree.nbCouverture % entree.nbEmplacement != 0) {
-            nb_min_plaque += 1;
-        }
+
         /* FIRST PASS */
         //Initialisation du vector
         poidsImpression.assign(entree.nbImpressionParCouverture.size(), 0);
@@ -82,9 +83,10 @@ int main(int argc, char* argv[])
             /* LOOP */
 
             // monkey search
-            current.nbPlaques = rand() % (entree.nbCouverture - nb_min_plaque) + nb_min_plaque + 1;      // TODO - changer le 1 pour le nombre minimum de plaques possible pour avoir une copie de chaque couverture
+            current.nbPlaques = rand() % entree.nbCouverture + nb_min_plaque ;      
             init(&current, &entree.nbEmplacement, &current.nbPlaques);
 
+            std::cout << current.nbPlaques << std::endl;
             // cette boucle genere un set et finit quand elle a un set valide
             do {
 
