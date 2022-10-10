@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include <fstream>
-#include <vector>
-#include <string>   
+#include <vector>  
 #include <chrono>
-#include <map>
 
-#define RUNTIME 15000000    // temps de la boucle (1 min = 60000000)
+// parametres
+#define RUNTIME 5           // temps de la boucle (secondes)
+#define NBCANDIDATES 10     // nombre de candidats 
+#define NBITERLOCAL 10000    // nombre d'iteration locale
+#define NBTHREADS 4         // (useless)nombre de threads
+
 
 struct Entree {
     unsigned int nbCouverture = 0;
@@ -22,19 +25,24 @@ struct Solution {
     unsigned int nbPlaques = 0;
     std::vector<unsigned int> nbImpression;
     std::vector<unsigned int> agencement;
-    float coutTotal = 0.0;
+    float coutTotal = FLT_MAX;
+    bool actif = true;
 };
 
+// fonctions
 bool lecture(Entree * entree,unsigned int* nbDataset);
 bool ecriture(Solution* solution, unsigned int *nbEmplacement, unsigned int *nbDataset);
-void calculCout(Solution* current,unsigned int *nbEmplacement, float *coutFeuille, float *coutPlaque);
-void impressionParPlaque(Solution* current,std::vector<unsigned int>* nbImpressions, unsigned int *nbCouverture, unsigned int *nbEmplacement);
-bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture);
-void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques);
+
+void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>* nbImpression, unsigned int* nbPlaques, float* coutTotal, unsigned int* nbEmplacement, float* coutImpression, float* coutFabrication);
+bool checkValiditePlaque(std::vector<unsigned int>* agencement, unsigned int* nbCouverture);
+void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nbPlaques, std::vector<unsigned int>* nbImpressions, std::vector<unsigned int>* nbImpressionsParCouv, unsigned int* nbCouverture, unsigned int* nbEmplacement);
+
+void init(Solution* current, unsigned int *nbEmplacements);
 void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int *nbCouverture, unsigned int *nbEmplacement);
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
-void SwitchAgencement(Solution* current);
 
+void SwitchAgencement(Solution* current);
+void thread(Solution* current, Entree* entree);
 
 
 
@@ -42,17 +50,25 @@ int main(int argc, char* argv[])
 {
     /*-----SETUP-----*/
     //declarations
-    unsigned int nbdataset;
-    unsigned long int iterations = 1, plaquesGenerees = 0, newBest = 0;
+    unsigned int nbdataset = 1;
+    unsigned int nbMinPlaques = 0;
+    unsigned int candidat = 0;
+    unsigned int i = 0;
+    unsigned int nbImpressions = 0;
+    unsigned int pireIndice = 0;
+    unsigned long int iterations = 0;
+    unsigned long int plaquesGenerees = 0;
+    unsigned long int newBest = 0;
+    unsigned long int microseconds = 0;     // duree
     bool fichierLu, fichierEcrit;
-    Entree entree;
-    Solution current, best;
-    std::vector<std::vector<int>> listCandidate[10];
+    float pireCout = 0.0;
     std::vector<float> poidsImpression;
+    Entree entree;
+    Solution best;
+    Solution listCandidats[NBCANDIDATES];
 
     // gestion du temps
     std::chrono::time_point<std::chrono::system_clock> start;
-    unsigned long int microseconds = 0;
 
 
     try{
@@ -61,69 +77,129 @@ int main(int argc, char* argv[])
         std::cout << "Quel dataset a tester ? : ";
         std::cin >> nbdataset;
         fichierLu = lecture(&entree, &nbdataset);
+
         // si une erreur survient a l'ouverture
         if (!fichierLu) throw 1;
 
         // attribution de la valeur la plus importante possible a best
-        best.coutTotal = FLT_MAX;
+        //best.coutTotal = FLT_MAX;
 
         // nombre minimum de plaque pour avoir toutes les couvertures
-        int nb_min_plaque = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
+        nbMinPlaques = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
 
-        // nombre minimum de plaque pour avoir toutes les couvertures
-        int nb_min_plaque = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
+        // association d'un poids pour chaque couverture
+        poidsImpression.assign(entree.nbCouverture, 0);
+        TableauPoids(&entree.nbImpressionParCouverture, &poidsImpression);
 
         /*-----METAHEURISTIQUE-----*/
         start = std::chrono::system_clock::now();
 
 
-        /* FIRST PASS */
-        //Initialisation du vector
-        poidsImpression.assign(entree.nbImpressionParCouverture.size(), 0);
-        TableauPoids(&entree.nbImpressionParCouverture, &poidsImpression);
+        /*---FIRST PASS---*/
+        
 
-        do {
-            /* LOOP */
-
-            // monkey search
-            current.nbPlaques = rand() % (entree.nbCouverture - nb_min_plaque) + nb_min_plaque ;      
-            init(&current, &entree.nbEmplacement, &current.nbPlaques);
-
-            std::cout << current.nbPlaques << std::endl;
-            // cette boucle genere un set et finit quand elle a un set valide
+        /* PREMIER REMPLISSAGE DE LA LISTE */
+        for (; candidat < NBCANDIDATES; candidat++) {
+            listCandidats[candidat].nbPlaques = (rand() % entree.nbCouverture) + nbMinPlaques;
+            init(&listCandidats[candidat], &entree.nbEmplacement);
             do {
 
-                // monkey search
-                generationPlaques(&current, poidsImpression, &entree.nbCouverture, &entree.nbEmplacement);
+                generationPlaques(&listCandidats[candidat], poidsImpression, &entree.nbCouverture, &entree.nbEmplacement);
 
-                plaquesGenerees += 1;    // stat
+                plaquesGenerees++;   // stat
+            } while (!checkValiditePlaque(&listCandidats[candidat].agencement, &entree.nbCouverture));
+            impressionParPlaque(&listCandidats[candidat].agencement, &listCandidats[candidat].nbPlaques, &listCandidats[candidat].nbImpression, &entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
+            calculCout(&listCandidats[candidat].agencement, &listCandidats[candidat].nbImpression, &listCandidats[candidat].nbPlaques, &listCandidats[candidat].coutTotal, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
 
-            } while ( !checkValiditePlaque(&current, &entree.nbCouverture));
+            // si meilleur, remplace le meilleur actuel
+            if (listCandidats[candidat].coutTotal < best.coutTotal) {
+
+                newBest += 1;   // stat
+                best.nbPlaques = listCandidats[candidat].nbPlaques;
+                best.agencement.assign(listCandidats[candidat].agencement.begin(), listCandidats[candidat].agencement.end());
+                best.nbImpression.assign(listCandidats[candidat].nbImpression.begin(), listCandidats[candidat].nbImpression.end());
+                best.coutTotal = listCandidats[candidat].coutTotal;
+            }
+        }
+
+
+        /* CHANGEMENTS LOCAUX */
+        for (i = 0; i < NBITERLOCAL; i++) {
+
+            thread(&listCandidats[rand()%NBCANDIDATES], &entree);
             iterations += 1;    // stat
 
-            for(int i = 0; i < 10; i++){
-                // defini un nombre d'impression et calcule le cout de cette configuration
-                impressionParPlaque(&current,&entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
-                calculCout(&current, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+        }
+
+
+        /*---LOOP---*/
+        do {
+
+
+            /* TRI PARMI LES CANDIDATS */
+            // on vire la moitie du pool de candidat, c'est du 50/50
+            for (i = 0; i < NBCANDIDATES / 2; i++) {
+                pireCout = 0.0;
+
+                // trouve le moins bon resultat
+                for (int j = 0; j < NBCANDIDATES; j++) {
+                    if (listCandidats[j].coutTotal > pireCout && listCandidats[j].actif) {
+                        pireCout = listCandidats[j].coutTotal;
+                        pireIndice = j;
+                    }
+                }
+
+                // le vire
+                listCandidats[pireIndice].actif=false;
+
+            }
+
+
+            /* REMPLISSAGE DE LA LISTE */
+            for (i = 0; i < NBCANDIDATES; i++) {
+                // si desactive
+                if (!listCandidats[i].actif) {
+                    // le remplis de nouvelles valeurs aleatoire
+                    listCandidats[i].nbPlaques = (rand() % entree.nbCouverture) + nbMinPlaques;
+                    init(&listCandidats[i], &entree.nbEmplacement);
+                    do {
+
+                        generationPlaques(&listCandidats[i], poidsImpression, &entree.nbCouverture, &entree.nbEmplacement);
+
+                        plaquesGenerees++;   // stat
+                    } while (!checkValiditePlaque(&listCandidats[i].agencement, &entree.nbCouverture));
+                    impressionParPlaque(&listCandidats[i].agencement, &listCandidats[i].nbPlaques, &listCandidats[i].nbImpression, &entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
+                    calculCout(&listCandidats[i].agencement, &listCandidats[i].nbImpression, &listCandidats[i].nbPlaques, &listCandidats[i].coutTotal, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+
+                }
+
+            }
+
+
+            /* CHANGEMENT LOCAUX */
+            for (i = 0; i < NBITERLOCAL; i++) {
+
+                int random = 0;
+                random = rand() % NBCANDIDATES;
+                thread(&listCandidats[random], &entree);
+                iterations += 1;    // stat
 
                 // si meilleur, remplace le meilleur actuel
-                if (current.coutTotal < best.coutTotal) {
+                if (listCandidats[random].coutTotal < best.coutTotal) {
 
                     newBest += 1;   // stat
-                    best.nbPlaques = current.nbPlaques;
-                    best.agencement.assign(current.agencement.begin(), current.agencement.end());
-                    best.nbImpression.assign(current.nbImpression.begin(), current.nbImpression.end());
-                    best.coutTotal = current.coutTotal;
+                    best.nbPlaques = listCandidats[random].nbPlaques;
+                    best.agencement.assign(listCandidats[random].agencement.begin(), listCandidats[random].agencement.end());
+                    best.nbImpression.assign(listCandidats[random].nbImpression.begin(), listCandidats[random].nbImpression.end());
+                    best.coutTotal = listCandidats[random].coutTotal;
                 }
-                SwitchAgencement(&current);
+
             }
+
+
         // se finit si le temps depuis start est egal ou superieur a 60 secondes
-        } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME);
-        
-        int nbImpressions = 0;
-        for (unsigned int i = 0; i < best.nbPlaques; i++) {
-            nbImpressions += best.nbImpression[i];
-        }
+        } while (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - start).count() < RUNTIME * pow(10, 6));
+
 
         std::cout << "fini !" << std::endl;
         std::cout << "nombres d'iterations dans la boucle: " << iterations << std::endl;
@@ -145,6 +221,9 @@ int main(int argc, char* argv[])
         if (e == 1) {
             std::cout << "erreur a la lecture du fichier en entree" << std::endl;
         }
+        if (e == 98) {
+            std::cout << listCandidats << std::endl;
+        }
         if (e == 99) {
             std::cout << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
         }
@@ -152,6 +231,212 @@ int main(int argc, char* argv[])
     }
 }
 
+
+
+/// <summary>
+/// calcule le cout de production des couvertures
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbEmplacement"></param>
+/// <param name="coutImpression"> cout par impression</param>
+/// <param name="coutFabrication"> cout par fabrication</param>
+void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>* nbImpression, unsigned int* nbPlaques, float* coutTotal,unsigned int *nbEmplacement,float *coutImpression,float *coutFabrication) {
+    
+    unsigned int totImpressions = 0;
+    for (unsigned int i = 0; i < *nbPlaques; i++) {
+        totImpressions += nbImpression->at(i);
+    }
+
+    *coutTotal =  (totImpressions * *coutImpression) + (*nbPlaques * *coutFabrication) ;
+}
+
+/// <summary>
+/// calcule le nombre d'impression de chaque plaques (non-optimise)
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbImpressions"></param>
+/// <param name="nbCouverture"></param>
+/// <param name="nbEmplacement"></param>
+void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nbPlaques,std::vector<unsigned int>* nbImpressions, std::vector<unsigned int>* nbImpressionsParCouv, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
+
+    // creation du buffer de valeurs
+    std::vector<unsigned int> bufferIteration(*nbCouverture,0);
+
+    // lecture du nombre d'iteration de chaque couverture dans les agencements
+    for (unsigned int i = 0; i < agencement->size(); i++) {
+        bufferIteration[agencement->at(i)] += 1;
+    }
+
+    // division du nombre d'impression par le nombre d'iteration
+    for (unsigned int i = 0; i < bufferIteration.size(); i++) {
+        bufferIteration[i] = ceil(nbImpressionsParCouv->at(i) / bufferIteration[i]);
+    }
+
+    // determination du nombre de passage minimum par chaque plaque
+    for (unsigned int plaque = 0; plaque < *nbPlaques; plaque++) {
+        for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) {
+            if (nbImpressions->at(plaque) < bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)]) {
+                nbImpressions->at(plaque) = bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)];
+            }
+        }
+    }
+    
+}
+
+/// <summary>
+/// verifie si les plaques generees sont valides
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbCouverture"></param>
+/// <returns></returns>
+bool checkValiditePlaque(std::vector<unsigned int>* agencement,unsigned int *nbCouverture) {
+
+    try {
+
+        std::vector<bool> checkApparationNombre(*nbCouverture);
+
+        // boucle dans toutes les cases
+        for (unsigned int valeur : *agencement)
+        {
+            checkApparationNombre[valeur] = true;
+        }
+
+        // verifie si tout les nombres sont present
+        if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
+
+        return true;  
+    }
+    catch (int e) {
+        return false;
+    }
+}
+
+/// <summary>
+/// code permettant de generer l'agencement des plaques
+/// </summary>
+/// <param name="current"></param>
+/// <param name="poidsImpression"></param>
+/// <param name="nbCouverture"></param>
+/// <param name="nbEmplacement"></param>
+void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement) {
+
+    int c1 = 0;
+    int c2 = 0;
+    float reduction = 1.0f / (float)(*nbEmplacement * current->nbPlaques);
+    
+    for (unsigned int i = 0; i < current->nbPlaques; i++) {
+        for (unsigned int j = 0; j < *nbEmplacement; j++) {
+
+            // peuplement des deux premiers
+            if (poidsImpression[1] < poidsImpression[0]) {
+                c1 = 0;
+                c2 = 1;
+            }
+            else {
+                c1 = 1;
+                c2 = 0;
+            }
+
+            //recherche des 2 meilleurs candidats
+            for (unsigned int x = 2; x < poidsImpression.size(); x++) {
+                if (poidsImpression[c2] < poidsImpression[x]) {
+                    if (poidsImpression[c1] < poidsImpression[x]) {
+                        c2 = c1;
+                        c1 = x;
+                    }
+                    else {
+                        c2 = x;
+                    }
+                }
+            }
+            if (rand() % 2) {
+                current->agencement[(i * (*nbEmplacement)) + j] = c2;
+                poidsImpression[c2] -= reduction;
+            }
+            else {
+                current->agencement[(i * (*nbEmplacement)) + j] = c1;
+                poidsImpression[c1] -= reduction;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// remplissage des tableaux de la solution de valeurs nulles 
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbEmplacements"></param>
+/// <param name="nbPlaques"></param>
+void init(Solution* current, unsigned int *nbEmplacements) {
+
+    // remplit la table agencement de valeurs nulles
+    current->agencement.assign(current->nbPlaques * (*nbEmplacements), 0);
+
+    // remplit la table nbImpression de valeurs nulles
+    current->nbImpression.assign(current->nbPlaques, 0);
+}
+
+/// <summary>
+/// remplissage des tableaux de la solution de valeurs nulles 
+/// </summary>
+/// <param name="current"></param>
+/// <param name="nbEmplacements"></param>
+/// <param name="nbPlaques"></param>
+void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression) {
+    
+    float total = 0;
+    for (int valeur : *nbImpression) {
+        total += valeur;
+    }
+    for (unsigned int i = 0; i < nbImpression->size();i++ ) {
+        poidsImpression->at(i) += nbImpression->at(i) / total;
+    }
+}
+
+void SwitchAgencement(Solution* current) {
+    int temp = 0;
+    int rand1 = 0;
+    int rand2 = 0;
+    int taille = current->agencement.size();
+    
+    rand1 = rand() % taille;
+    rand2 = rand() % taille;
+    if (rand1 == rand2) {
+        if (rand1 == taille - 1)rand2--;
+        else rand2++;
+    }
+    temp = current->agencement.at(rand1);
+    current->agencement.at(rand1) = current->agencement.at(rand2);
+    current->agencement.at(rand2) = temp;
+}
+
+
+void thread(Solution* current,Entree* entree)
+{
+    // crée un nouvel agencement
+    std::vector<unsigned int> agencementBis;
+    std::vector<unsigned int> impressionsBis;
+    float coutBis = 0;
+    impressionsBis.assign(current->nbPlaques, 0);
+
+    do {
+    agencementBis.assign(current->agencement.begin(),current->agencement.end());
+    agencementBis[rand() % agencementBis.size()] = (rand() % entree->nbCouverture);
+    } while (!checkValiditePlaque(&agencementBis, &entree->nbCouverture));
+
+    // calcule le cout de ce nouvel agencement
+    impressionParPlaque(&agencementBis, &current->nbPlaques, &impressionsBis, &entree->nbImpressionParCouverture, &entree->nbCouverture, &entree->nbEmplacement);
+    calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &coutBis, &entree->nbEmplacement, &entree->coutImpression, &entree->coutFabrication);
+
+
+    // compare, garde le meilleur
+    if (coutBis < current->coutTotal) {
+
+        current->agencement.assign(agencementBis.begin(), agencementBis.end());
+        current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
+        current->coutTotal = coutBis;
+    }
+}
 
 
 /// <summary>
@@ -199,7 +484,6 @@ bool lecture(Entree* entree, unsigned int* nbDataset) {
     }
 }
 
-
 /// <summary>
 /// permet d'ecrire le fichier de sortie
 /// </summary>
@@ -236,180 +520,4 @@ bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbD
         return 0;
     }
    
-}
-
-/// <summary>
-/// calcule le cout de production des couvertures
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbEmplacement"></param>
-/// <param name="coutImpression"> cout par impression</param>
-/// <param name="coutFabrication"> cout par fabrication</param>
-void calculCout(Solution* current,unsigned int *nbEmplacement,float *coutImpression,float *coutFabrication) {
-    
-    int nbImpressions = 0;
-    for (unsigned int i = 0; i < current->nbPlaques; i++) {
-        nbImpressions += current->nbImpression[i];
-    }
-
-    current->coutTotal =  (nbImpressions * *coutImpression) + (current->nbPlaques * *coutFabrication) ;
-}
-
-/// <summary>
-/// calcule le nombre d'impression de chaque plaques (non-optimise)
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbImpressions"></param>
-/// <param name="nbCouverture"></param>
-/// <param name="nbEmplacement"></param>
-void impressionParPlaque(Solution* current, std::vector<unsigned int>* nbImpressions, unsigned int *nbCouverture,unsigned int *nbEmplacement) {
-
-    // creation du buffer de valeurs
-    std::vector<unsigned int> bufferIteration(*nbCouverture,0);
-
-    // lecture du nombre d'iteration de chaque couverture dans les agancements
-    for (int i = 0; i < current->agencement.size(); i++) {
-        bufferIteration[current->agencement[i]] += 1;
-    }
-
-    // division du nombre d'impression par le nombre d'iteration
-    for (int i = 0; i < bufferIteration.size(); i++) {
-        bufferIteration[i] = ceil(nbImpressions->at(i) / bufferIteration[i]);
-    }
-
-    // determination du nombre de passage minimum par chaque plaque
-    for (int i = 0; i < current->nbPlaques; i++) {
-        for (int j = 0; j < *nbEmplacement; j++) {
-            if (current->nbImpression[i] < bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]]) {
-                current->nbImpression[i] = bufferIteration[current->agencement[(i * (*nbEmplacement)) + j]];
-            }
-        }
-    }
-    
-}
-
-/// <summary>
-/// verifie si les plaques generees sont valides
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbCouverture"></param>
-/// <returns></returns>
-bool checkValiditePlaque(Solution* current,unsigned int *nbCouverture) {
-
-    try {
-
-    std::vector<bool> checkApparationNombre(*nbCouverture);
-
-    // boucle dans toutes les cases
-    for (unsigned int valeur : current->agencement)
-    {
-        checkApparationNombre[valeur] = true;
-    }
-
-    // verifie si tout les nombres sont present
-    if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
-
-    return true;  
-    }
-    catch (int e) {
-        return false;
-    }
-}
-
-
-
-void generationPlaques(Solution* current, std::vector<float> poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement) {
-
-    int c1 = 0;
-    int c2 = 0;
-    float reduction = 1.0f / (float)(*nbEmplacement * current->nbPlaques);
-    
-    for (int i = 0; i < current->nbPlaques; i++) {
-        for (int j = 0; j < *nbEmplacement; j++) {
-
-            // peuplement des deux premiers
-            if (poidsImpression[1] < poidsImpression[0]) {
-                c1 = 0;
-                c2 = 1;
-            }
-            else {
-                c1 = 1;
-                c2 = 0;
-            }
-
-            //recherche des 2 meilleurs candidats
-            for (int x = 2; x < poidsImpression.size(); x++) {
-                if (poidsImpression[c2] < poidsImpression[x]) {
-                    if (poidsImpression[c1] < poidsImpression[x]) {
-                        c2 = c1;
-                        c1 = x;
-                    }
-                    else {
-                        c2 = x;
-                    }
-                }
-            }
-            if (rand() % 2) {
-                current->agencement[(i * (*nbEmplacement)) + j] = c2;
-                poidsImpression[c2] -= reduction;
-            }
-            else {
-                current->agencement[(i * (*nbEmplacement)) + j] = c1;
-                poidsImpression[c1] -= reduction;
-            }
-        }
-    }
-}
-
-
-
-/// <summary>
-/// remplissage des tableaux de la solution de valeurs nulles 
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbEmplacements"></param>
-/// <param name="nbPlaques"></param>
-void init(Solution* current, unsigned int *nbEmplacements, unsigned int *nbPlaques) {
-
-    // remplit la table agancement de valeurs nulles
-    current->agencement.assign(current->nbPlaques * (*nbEmplacements), 0);
-
-    // remplit la table nbImpression de valeurs nulles
-    current->nbImpression.assign(*nbPlaques, 0);
-
-    current->nbPlaques = *nbPlaques;
-}
-
-/// <summary>
-/// remplissage des tableaux de la solution de valeurs nulles 
-/// </summary>
-/// <param name="current"></param>
-/// <param name="nbEmplacements"></param>
-/// <param name="nbPlaques"></param>
-void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression) {
-    
-    float total = 0;
-    for (int valeur : *nbImpression) {
-        total += valeur;
-    }
-    for (int i = 0; i < nbImpression->size();i++ ) {
-        poidsImpression->at(i) += nbImpression->at(i) / total;
-    }
-}
-
-void SwitchAgencement(Solution* current) {
-    int temp = 0;
-    int rand1 = 0;
-    int rand2 = 0;
-    int taille = current->agencement.size();
-    
-    rand1 = rand() % taille;
-    rand2 = rand() % taille;
-    if (rand1 == rand2) {
-        if (rand1 == taille - 1)rand2--;
-        else rand2++;
-    }
-    temp = current->agencement.at(rand1);
-    current->agencement.at(rand1) = current->agencement.at(rand2);
-    current->agencement.at(rand2) = temp;
 }
