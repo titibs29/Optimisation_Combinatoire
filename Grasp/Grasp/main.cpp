@@ -418,6 +418,35 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
 /// <param name="current"></param>
 /// <param name="entree"></param>
 void thread(Solution* current, Entree* entree)
+    
+    float total = 0;
+    for (int valeur : *nbImpression) {
+        total += valeur;
+    }
+    for (unsigned int i = 0; i < nbImpression->size();i++ ) {
+        poidsImpression->at(i) += nbImpression->at(i) / total;
+    }
+}
+
+void SwitchAgencement(Solution* current) {
+    if (current->nbPlaques < 2) {
+        int temp = 0;
+        int rand1 = 0;
+        int rand2 = 0;
+        int taille = current->agencement.size();
+
+        rand1 = rand() % taille;
+        rand2 = rand() % taille + (((rand() % current->nbPlaques) + 1) * taille);
+
+        temp = current->agencement.at(rand1);
+        current->agencement.at(rand1) = current->agencement.at(rand2);
+        current->agencement.at(rand2) = temp;
+    }
+    
+}
+
+
+void thread(Solution* current,Entree* entree)
 {
 	// crée un nouvel agencement
 	std::vector<unsigned int> agencementBis;
