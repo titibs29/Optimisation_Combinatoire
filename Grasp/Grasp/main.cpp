@@ -8,7 +8,7 @@
 #include <chrono>
 
 // parametres
-#define RUNTIME 30           // temps de la boucle (secondes)
+#define RUNTIME 5           // temps de la boucle (secondes)
 #define NBCANDIDATES 10     // nombre de candidats 
 #define NBITERLOCAL 10000    // nombre d'iteration locale
 #define NBTHREADS 4         // (useless)nombre de threads
@@ -412,22 +412,6 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
 	}
 }
 
-/// <summary>
-/// contient l'ensemble du code execute dans la partie locale de grasp, peut etre porte en multithreading
-/// </summary>
-/// <param name="current"></param>
-/// <param name="entree"></param>
-void thread(Solution* current, Entree* entree)
-    
-    float total = 0;
-    for (int valeur : *nbImpression) {
-        total += valeur;
-    }
-    for (unsigned int i = 0; i < nbImpression->size();i++ ) {
-        poidsImpression->at(i) += nbImpression->at(i) / total;
-    }
-}
-
 void SwitchAgencement(Solution* current) {
     if (current->nbPlaques < 2) {
         int temp = 0;
@@ -451,15 +435,18 @@ void thread(Solution* current,Entree* entree)
 	// crée un nouvel agencement
 	std::vector<unsigned int> agencementBis;
 	std::vector<unsigned int> impressionsBis;
-	float coutBis = 0;
+	float coutBis = 0.0;
 	impressionsBis.assign(current->nbPlaques, 0);
 
 	do {
 		agencementBis.assign(current->agencement.begin(), current->agencement.end());
+
 		for (int i = rand() % (entree->nbEmplacement * entree->nbCouverture); i > 0; i--) {
 			agencementBis[rand() % agencementBis.size()] = (rand() % entree->nbCouverture);
 		}
+
 	} while (!checkValiditePlaque(&agencementBis, &entree->nbCouverture));
+
 
 	// calcule le cout de ce nouvel agencement
 	impressionParPlaque(&agencementBis, &current->nbPlaques, &impressionsBis, &entree->nbImpressionParCouverture, &entree->nbCouverture, &entree->nbEmplacement);
@@ -556,20 +543,4 @@ bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbD
 		return 0;
 	}
 
-}
-
-void SwitchAgencement(Solution* current) {
-	int temp = 0;
-	int rand1 = 0;
-	int rand2 = 0;
-	int taille = current->agencement.size();
-
-	rand1 = rand() % taille;
-	rand2 = rand() % taille;
-	while (rand1 == rand2) {
-		rand2 = rand() % taille;
-	}
-	temp = current->agencement.at(rand1);
-	current->agencement.at(rand1) = current->agencement.at(rand2);
-	current->agencement.at(rand2) = temp;
 }
