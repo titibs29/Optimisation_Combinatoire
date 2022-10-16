@@ -33,15 +33,26 @@ struct Solution {
 };
 
 // fonctions
-bool lecture(Entree* entree, unsigned int* nbDataset);
-bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbDataset);
+bool lecture(Entree* entree, std::string input);
+bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short int* nbDataset);
 
-void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>* nbImpression, unsigned int* nbPlaques, float* coutTotal, unsigned int* nbEmplacement, float* coutImpression, float* coutFabrication);
-bool checkValiditePlaque(std::vector<unsigned int>* agencement, unsigned int* nbCouverture);
-void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nbPlaques, std::vector<unsigned int>* nbImpressions, std::vector<unsigned int>* nbImpressionsParCouv, unsigned int* nbCouverture, unsigned int* nbEmplacement);
+void calculCout(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpression, 
+	unsigned short int* nbPlaques,
+	unsigned char* nbEmplacement, 
+	float* coutTotal, 
+	float* coutImpression,
+	float* coutFabrication);
+bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* nbCouverture);
+void impressionParPlaque(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpressions,
+	std::vector<unsigned int>* nbImpressionsParCouv, 
+	unsigned short int* nbPlaques,
+	unsigned char* nbCouverture,
+	unsigned char* nbEmplacement);
 
-void init(Solution* current, unsigned int* nbEmplacements);
-void generationPlaques(Solution* current, std::vector<float> *poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement);
+void init(Solution* current, unsigned char* nbEmplacements);
+void generationPlaques(Solution* current, std::vector<float> *poidsImpression, unsigned char* nbCouverture, unsigned char* nbEmplacement);
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
 
 void SwitchAgencement(Solution* current);
@@ -53,7 +64,7 @@ int main(int argc, char* argv[])
 {
 	/*-----SETUP-----*/
 	//declarations
-	unsigned char nbdataset = 1;	//max 16
+	unsigned short int nbdataset = 1;	//max 16
 	unsigned short int nbMinPlaques = 0;
 	unsigned short int nbMaxPlaques = USHRT_MAX;
 	unsigned int candidat = 0;
@@ -66,7 +77,7 @@ int main(int argc, char* argv[])
 	unsigned long int plaquesGenerees = 0;
 	unsigned long int newBest = 0;
 	unsigned long int microseconds = 0;     // duree
-	bool fichierLu = false, fichierEcrit = false;
+	bool err = false;
 	float pireCout = 0.0;
 	std::vector<float> poidsImpression;
 	Entree entree;
@@ -83,13 +94,13 @@ int main(int argc, char* argv[])
 		// recuperation des donnees dans le fichier en entree
 		std::cout << "Quel dataset a tester ? : ";
 		std::cin >> nbdataset;
-		fichierLu = lecture(&entree, &nbdataset);
+		
+		err = lecture(&entree, "Dataset-Dev/I" + std::to_string(nbdataset) + ".in");
 
 		// si une erreur survient a l'ouverture
-		if (!fichierLu) throw 1;
+		if (!err) throw 1;
 
-
-		if (entree.nbEmplacement == 0U)
+		if (entree.nbEmplacement == '\0')
 		{
 			throw 2;
 		}
@@ -122,8 +133,19 @@ int main(int argc, char* argv[])
 
 				plaquesGenerees++;   // stat
 			} while (!checkValiditePlaque(&listCandidats[candidat].agencement, &entree.nbCouverture));
-			impressionParPlaque(&listCandidats[candidat].agencement, &listCandidats[candidat].nbPlaques, &listCandidats[candidat].nbImpression, &entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
-			calculCout(&listCandidats[candidat].agencement, &listCandidats[candidat].nbImpression, &listCandidats[candidat].nbPlaques, &listCandidats[candidat].coutTotal, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+			impressionParPlaque(&listCandidats[candidat].agencement, 
+				&listCandidats[candidat].nbImpression, 
+				&entree.nbImpressionParCouverture, 
+				&listCandidats[candidat].nbPlaques, 
+				&entree.nbCouverture, 
+				&entree.nbEmplacement);
+			calculCout(&listCandidats[candidat].agencement, 
+				&listCandidats[candidat].nbImpression, 
+				&listCandidats[candidat].nbPlaques, 
+				&entree.nbEmplacement,
+				&listCandidats[candidat].coutTotal,
+				&entree.coutImpression,
+				&entree.coutFabrication);
 
 			// si meilleur, remplace le meilleur actuel
 			if (listCandidats[candidat].coutTotal < best.coutTotal) {
@@ -203,8 +225,19 @@ int main(int argc, char* argv[])
 
 						plaquesGenerees++;   // stat
 					} while (!checkValiditePlaque(&listCandidats[i].agencement, &entree.nbCouverture));
-					impressionParPlaque(&listCandidats[i].agencement, &listCandidats[i].nbPlaques, &listCandidats[i].nbImpression, &entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
-					calculCout(&listCandidats[i].agencement, &listCandidats[i].nbImpression, &listCandidats[i].nbPlaques, &listCandidats[i].coutTotal, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+					impressionParPlaque(&listCandidats[i].agencement,
+						&listCandidats[i].nbImpression,
+						&entree.nbImpressionParCouverture,
+						&listCandidats[i].nbPlaques,
+						&entree.nbCouverture,
+						&entree.nbEmplacement);
+					calculCout(&listCandidats[i].agencement,
+						&listCandidats[i].nbImpression,
+						&listCandidats[i].nbPlaques,
+						&entree.nbEmplacement,
+						&listCandidats[i].coutTotal,
+						&entree.coutImpression,
+						&entree.coutFabrication);
 					listCandidats[i].actif = true;
 
 					// si meilleur, remplace le meilleur actuel
@@ -254,8 +287,8 @@ int main(int argc, char* argv[])
 
 		/*-----FIN-----*/
 		// ecriture du fichier de sortie
-		fichierEcrit = ecriture(&best, &entree.nbEmplacement, &nbdataset);
-		if (!fichierEcrit) throw 99;
+		err = ecriture(&best, &entree.nbEmplacement, &nbdataset);
+		if (!err) throw 99;
 		system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
 
 
@@ -288,7 +321,13 @@ int main(int argc, char* argv[])
 /// <param name="nbEmplacement"></param>
 /// <param name="coutImpression"> cout par impression</param>
 /// <param name="coutFabrication"> cout par fabrication</param>
-void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>* nbImpression, unsigned int* nbPlaques, float* coutTotal, unsigned int* nbEmplacement, float* coutImpression, float* coutFabrication) {
+void calculCout(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpression,
+	unsigned short int* nbPlaques,
+	unsigned char* nbEmplacement,
+	float* coutTotal,
+	float* coutImpression,
+	float* coutFabrication) {
 
 	unsigned int totImpressions = 0;
 	for (unsigned int i = 0; i < *nbPlaques; i++) {
@@ -305,7 +344,12 @@ void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>
 /// <param name="nbImpressions"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nbPlaques, std::vector<unsigned int>* nbImpressions, std::vector<unsigned int>* nbImpressionsParCouv, unsigned int* nbCouverture, unsigned int* nbEmplacement) {
+void impressionParPlaque(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpressions,
+	std::vector<unsigned int>* nbImpressionsParCouv,
+	unsigned short int* nbPlaques,
+	unsigned char* nbCouverture,
+	unsigned char* nbEmplacement) {
 
 	// creation du buffer de valeurs
 	std::vector<unsigned int> bufferIteration(*nbCouverture, 0);
@@ -337,7 +381,7 @@ void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nb
 /// <param name="current"></param>
 /// <param name="nbCouverture"></param>
 /// <returns></returns>
-bool checkValiditePlaque(std::vector<unsigned int>* agencement, unsigned int* nbCouverture) {
+bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* nbCouverture) {
 
 	try {
 
@@ -366,7 +410,7 @@ bool checkValiditePlaque(std::vector<unsigned int>* agencement, unsigned int* nb
 /// <param name="poidsImpression"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
-void generationPlaques(Solution* current, std::vector<float>* poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement) {
+void generationPlaques(Solution* current, std::vector<float>* poidsImpression, unsigned char* nbCouverture, unsigned char* nbEmplacement) {
 
 	int c1 = 0;
 	int c2 = 0;
@@ -416,7 +460,7 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 /// <param name="current"></param>
 /// <param name="nbEmplacements"></param>
 /// <param name="nbPlaques"></param>
-void init(Solution* current, unsigned int* nbEmplacements) {
+void init(Solution* current, unsigned char* nbEmplacements) {
 
 	// remplit la table agencement de valeurs nulles
 	current->agencement.assign(current->nbPlaques * (*nbEmplacements), 0);
@@ -464,7 +508,7 @@ void SwitchAgencement(Solution* current) {
 void thread(Solution* current,Entree* entree)
 {
 	// crée un nouvel agencement
-	std::vector<unsigned int> agencementBis;
+	std::vector<unsigned char> agencementBis;
 	std::vector<unsigned int> impressionsBis;
 	float coutBis = 0.0;
 	int i = 0;
@@ -481,8 +525,8 @@ void thread(Solution* current,Entree* entree)
 
 
 	// calcule le cout de ce nouvel agencement
-	impressionParPlaque(&agencementBis, &current->nbPlaques, &impressionsBis, &entree->nbImpressionParCouverture, &entree->nbCouverture, &entree->nbEmplacement);
-	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &coutBis, &entree->nbEmplacement, &entree->coutImpression, &entree->coutFabrication);
+	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques, &entree->nbCouverture, &entree->nbEmplacement);
+	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree->nbEmplacement, &coutBis, &entree->coutImpression, &entree->coutFabrication);
 
 
 	// compare, garde le meilleur
@@ -499,9 +543,11 @@ void thread(Solution* current,Entree* entree)
 /// </summary>
 /// <param name="entree"> structure en entree de l'algo</param>
 /// <param name="nbDataset"> numero de dataset</param>
-bool lecture(Entree* entree, unsigned int* nbDataset) {
+bool lecture(Entree* entree, std::string input) {
 
-	std::ifstream fichier("Dataset-Dev/I" + std::to_string(*nbDataset) + ".in");  //Ouverture d'un fichier en lecture
+
+
+	std::ifstream fichier(input);  //Ouverture d'un fichier en lecture
 
 	if (fichier.is_open())
 	{
@@ -545,7 +591,7 @@ bool lecture(Entree* entree, unsigned int* nbDataset) {
 /// <param name="solution"> solution a ecrire</param>
 /// <param name="nbEmplacement"> nombre d'emplacement sur une plaque</param>
 /// <param name="nbDataset"> numero du dataset en entree</param>
-bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbDataset) {
+bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short int* nbDataset) {
 
 	std::ofstream fichier("output/O" + std::to_string(*nbDataset) + ".out");
 	if (fichier.is_open())
