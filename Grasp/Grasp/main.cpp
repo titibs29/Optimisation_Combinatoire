@@ -17,17 +17,17 @@
 
 
 struct Entree {
-	unsigned int nbCouverture = 0;
-	unsigned int nbEmplacement = 0;
+	unsigned char nbCouverture = 0;		// max 125
+	unsigned char nbEmplacement = 0;	// max 25
 	std::vector<unsigned int> nbImpressionParCouverture;
 	float coutImpression = 0.0;
 	float coutFabrication = 0.0;
 };
 
 struct Solution {
-	unsigned int nbPlaques = 0;
+	unsigned short int nbPlaques = 0;
 	std::vector<unsigned int> nbImpression;
-	std::vector<unsigned int> agencement;
+	std::vector<unsigned char> agencement; // max 125
 	float coutTotal = FLT_MAX;
 	bool actif = true;
 };
@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
 {
 	/*-----SETUP-----*/
 	//declarations
-	unsigned int nbdataset = 1;
-	unsigned int nbMinPlaques = 0;
-	unsigned int nbMaxPlaques = UINT_MAX;
+	unsigned char nbdataset = 1;	//max 16
+	unsigned short int nbMinPlaques = 0;
+	unsigned short int nbMaxPlaques = USHRT_MAX;
 	unsigned int candidat = 0;
 	unsigned int i = 0;
 	unsigned int j = 0;
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 	unsigned long int plaquesGenerees = 0;
 	unsigned long int newBest = 0;
 	unsigned long int microseconds = 0;     // duree
-	bool fichierLu, fichierEcrit;
+	bool fichierLu = false, fichierEcrit = false;
 	float pireCout = 0.0;
 	std::vector<float> poidsImpression;
 	Entree entree;
