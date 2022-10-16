@@ -8,10 +8,12 @@
 #include <chrono>
 
 // parametres
-#define RUNTIME 5           // temps de la boucle (secondes)
-#define NBCANDIDATES 10     // nombre de candidats 
-#define NBITERLOCAL 10000    // nombre d'iteration locale
-#define NBTHREADS 4         // (useless)nombre de threads
+#define RUNTIME 15				// temps de la boucle (secondes)
+#define NBCANDIDATES 10			// nombre de candidats 
+#define NBITERLOCAL 100			// nombre d'iteration locale
+#define NBTHREADS 4				// (useless)nombre de threads
+#define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
+#define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
 
 struct Entree {
@@ -53,8 +55,10 @@ int main(int argc, char* argv[])
 	//declarations
 	unsigned int nbdataset = 1;
 	unsigned int nbMinPlaques = 0;
+	unsigned int nbMaxPlaques = UINT_MAX;
 	unsigned int candidat = 0;
 	unsigned int i = 0;
+	unsigned int j = 0;
 	unsigned int nbImpressions = 0;
 	unsigned int pireIndice = 0;
 	unsigned int random = 0;
@@ -68,6 +72,7 @@ int main(int argc, char* argv[])
 	Entree entree;
 	Solution best;
 	Solution listCandidats[NBCANDIDATES];
+	best.coutTotal = FLT_MAX;				//attribution de la valeur la plus importante possible a best
 
 	// gestion du temps
 	std::chrono::time_point<std::chrono::system_clock> start;
@@ -83,17 +88,23 @@ int main(int argc, char* argv[])
 		// si une erreur survient a l'ouverture
 		if (!fichierLu) throw 1;
 
-		// attribution de la valeur la plus importante possible a best
-		//best.coutTotal = FLT_MAX;
+
+		if (entree.nbEmplacement == 0U)
+		{
+			throw 2;
+		}
 
 		// nombre minimum de plaque pour avoir toutes les couvertures
 		nbMinPlaques = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
+		nbMaxPlaques = entree.nbCouverture;
 
 		// association d'un poids pour chaque couverture
 		poidsImpression.assign(entree.nbCouverture, 0);
 		TableauPoids(&entree.nbImpressionParCouverture, &poidsImpression);
 
 		std::cout << "debut du calcul, cela va prendre " << RUNTIME << " secondes" << std::endl;
+
+
 		/*-----METAHEURISTIQUE-----*/
 
 
@@ -103,7 +114,7 @@ int main(int argc, char* argv[])
 
 		/* PREMIER REMPLISSAGE DE LA LISTE */
 		for (; candidat < NBCANDIDATES; candidat++) {
-			listCandidats[candidat].nbPlaques = (rand() % entree.nbCouverture) + nbMinPlaques;
+			listCandidats[candidat].nbPlaques = (rand() % nbMaxPlaques) + nbMinPlaques;
 			init(&listCandidats[candidat], &entree.nbEmplacement);
 			do {
 
@@ -152,11 +163,11 @@ int main(int argc, char* argv[])
 
 			/* TRI PARMI LES CANDIDATS */
 			// on vire la moitie du pool de candidat, c'est du 50/50
-			for (i = 0; i < NBCANDIDATES / 2; i++) {
+			for (i = 0; i < NBCANDIDATES * 0.5; i++) {
 				pireCout = 0.0;
 
 				// trouve le moins bon resultat
-				for (int j = 0; j < NBCANDIDATES; j++) {
+				for (j = 0; j < NBCANDIDATES; j++) {
 					if (listCandidats[j].coutTotal > pireCout && listCandidats[j].actif) {
 						pireCout = listCandidats[j].coutTotal;
 						pireIndice = j;
@@ -173,8 +184,18 @@ int main(int argc, char* argv[])
 			for (i = 0; i < NBCANDIDATES; i++) {
 				// si desactive
 				if (!listCandidats[i].actif) {
+
 					// le remplis de nouvelles valeurs aleatoire
-					listCandidats[i].nbPlaques = (rand() % entree.nbCouverture) + nbMinPlaques;
+
+					// chances de génerer une candidat avec moins de plaques
+					if (best.nbPlaques > nbMinPlaques) {
+						if ((rand() % 100) < CHANCESMOINSPLAQUES) {
+						listCandidats[i].nbPlaques = (rand() % (best.nbPlaques - nbMinPlaques)) + nbMinPlaques;
+						}
+					}
+					else {
+						listCandidats[i].nbPlaques = (rand() % nbMaxPlaques) + nbMinPlaques;
+					}
 					init(&listCandidats[i], &entree.nbEmplacement);
 					do {
 
@@ -184,6 +205,7 @@ int main(int argc, char* argv[])
 					} while (!checkValiditePlaque(&listCandidats[i].agencement, &entree.nbCouverture));
 					impressionParPlaque(&listCandidats[i].agencement, &listCandidats[i].nbPlaques, &listCandidats[i].nbImpression, &entree.nbImpressionParCouverture, &entree.nbCouverture, &entree.nbEmplacement);
 					calculCout(&listCandidats[i].agencement, &listCandidats[i].nbImpression, &listCandidats[i].nbPlaques, &listCandidats[i].coutTotal, &entree.nbEmplacement, &entree.coutImpression, &entree.coutFabrication);
+					listCandidats[i].actif = true;
 
 					// si meilleur, remplace le meilleur actuel
 					if (listCandidats[i].coutTotal < best.coutTotal) {
@@ -241,10 +263,17 @@ int main(int argc, char* argv[])
 	// gestion des erreurs
 	catch (unsigned int e) {
 		if (e == 1) {
-			std::cout << "erreur a la lecture du fichier en entree" << std::endl;
+			std::cerr << "erreur a la lecture du fichier en entree" << std::endl;
+		}
+		if (e == 2) {
+			std::cerr << "division par zero impossible " << std::endl;
 		}
 		if (e == 99) {
-			std::cout << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
+			std::cerr << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
+		}
+		else
+		{
+			std::cerr << "erreur inconnue" << std::endl;
 		}
 
 	}
@@ -341,6 +370,7 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 
 	int c1 = 0;
 	int c2 = 0;
+	if (*nbEmplacement * current->nbPlaques == 0) throw 2;
 	float reduction = 1.0f / (float)(*nbEmplacement * current->nbPlaques);
 
 	for (unsigned int i = 0; i < current->nbPlaques; i++) {
@@ -407,6 +437,7 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
 	for (int valeur : *nbImpression) {
 		total += valeur;
 	}
+	if (total == 0) throw 2;
 	for (unsigned int i = 0; i < nbImpression->size(); i++) {
 		poidsImpression->at(i) += nbImpression->at(i) / total;
 	}
@@ -436,12 +467,13 @@ void thread(Solution* current,Entree* entree)
 	std::vector<unsigned int> agencementBis;
 	std::vector<unsigned int> impressionsBis;
 	float coutBis = 0.0;
+	int i = 0;
 	impressionsBis.assign(current->nbPlaques, 0);
 
 	do {
 		agencementBis.assign(current->agencement.begin(), current->agencement.end());
 
-		for (int i = rand() % (entree->nbEmplacement * entree->nbCouverture); i > 0; i--) {
+		for (i= rand() % agencementBis.size()+1; i > 0; i--) {
 			agencementBis[rand() % agencementBis.size()] = (rand() % entree->nbCouverture);
 		}
 
