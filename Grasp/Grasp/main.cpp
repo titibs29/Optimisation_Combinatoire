@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
 	unsigned long int iterations = 0;
 	unsigned long int plaquesGenerees = 0;
 	unsigned long int newBest = 0;
+	unsigned long int nbTotCandidats = 0;
 	unsigned long int microseconds = 0;     // duree
 	bool err = false;
 	float pireCout = 0.0;
@@ -98,12 +99,9 @@ int main(int argc, char* argv[])
 		err = lecture(&entree, "Dataset-Dev/I" + std::to_string(nbdataset) + ".in");
 
 		// si une erreur survient a l'ouverture
-		if (!err) throw 1;
+		if (err) throw 1;
 
-		if (entree.nbEmplacement == '\0')
-		{
-			throw 2;
-		}
+		if (entree.nbEmplacement == '\0') throw 2; // nbEmplacement ne peut pas etre nul, il sera denominateur d'une division
 
 		// nombre minimum de plaque pour avoir toutes les couvertures
 		nbMinPlaques = ceil(entree.nbCouverture / (float)entree.nbEmplacement);
@@ -146,6 +144,7 @@ int main(int argc, char* argv[])
 				&listCandidats[candidat].coutTotal,
 				&entree.coutImpression,
 				&entree.coutFabrication);
+			nbTotCandidats++;
 
 			// si meilleur, remplace le meilleur actuel
 			if (listCandidats[candidat].coutTotal < best.coutTotal) {
@@ -164,7 +163,7 @@ int main(int argc, char* argv[])
 
 			random = rand() % NBCANDIDATES;
 			thread(&listCandidats[random], &entree);
-			iterations += 1;    // stat
+			iterations++;    // stat
 			plaquesGenerees++;   // stat
 
 			// si meilleur, remplace le meilleur actuel
@@ -207,8 +206,8 @@ int main(int argc, char* argv[])
 				// si desactive
 				if (!listCandidats[i].actif) {
 
-					// le remplis de nouvelles valeurs aleatoire
 
+					// le remplis de nouvelles valeurs aleatoire
 					// chances de génerer une candidat avec moins de plaques
 					if (best.nbPlaques > nbMinPlaques) {
 						if ((rand() % 100) < CHANCESMOINSPLAQUES) {
@@ -239,6 +238,8 @@ int main(int argc, char* argv[])
 						&entree.coutImpression,
 						&entree.coutFabrication);
 					listCandidats[i].actif = true;
+					nbTotCandidats++;
+
 
 					// si meilleur, remplace le meilleur actuel
 					if (listCandidats[i].coutTotal < best.coutTotal) {
@@ -282,13 +283,15 @@ int main(int argc, char* argv[])
 		std::cout << "nombres d'iterations dans la boucle: " << iterations << std::endl;
 		std::cout << "nombre de plaques differentes generees: " << plaquesGenerees << std::endl;
 		std::cout << "nombre de nouveau best realise: " << newBest << std::endl;
+		std::cout << "nombre de candidats crees: " << nbTotCandidats << std::endl;
+
 
 
 
 		/*-----FIN-----*/
 		// ecriture du fichier de sortie
 		err = ecriture(&best, &entree.nbEmplacement, &nbdataset);
-		if (!err) throw 99;
+		if (err) throw 99;
 		system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
 
 
@@ -296,17 +299,23 @@ int main(int argc, char* argv[])
 	// gestion des erreurs
 	catch (unsigned int e) {
 		if (e == 1) {
-			std::cerr << "erreur a la lecture du fichier en entree" << std::endl;
+			std::cout << "erreur a la lecture du fichier en entree" << std::endl;
 		}
 		if (e == 2) {
-			std::cerr << "division par zero impossible " << std::endl;
+			std::cout << "division par zero impossible " << std::endl;
+		}
+		if (e == 3) {
+			std::cout << "erreur a l'ouverture du fichier en entree" << std::endl;
+		}
+		if (e == 98) {
+			std::cout << "erreur a l'ouverture du fichier en sortie" << std::endl;
 		}
 		if (e == 99) {
-			std::cerr << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
+			std::cout << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
 		}
 		else
 		{
-			std::cerr << "erreur inconnue" << std::endl;
+			std::cout << "erreur inconnue" << std::endl;
 		}
 
 	}
@@ -383,8 +392,6 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 /// <returns></returns>
 bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* nbCouverture) {
 
-	try {
-
 		std::vector<bool> checkApparationNombre(*nbCouverture);
 
 		// boucle dans toutes les cases
@@ -397,10 +404,6 @@ bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* 
 		if ((std::count(checkApparationNombre.begin(), checkApparationNombre.end(), 0))) return false;
 
 		return true;
-	}
-	catch (int e) {
-		return false;
-	}
 }
 
 /// <summary>
@@ -414,7 +417,7 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 
 	int c1 = 0;
 	int c2 = 0;
-	if (*nbEmplacement * current->nbPlaques == 0) throw 2;
+	if (*nbEmplacement == 0 || current->nbPlaques == 0) throw 2;
 	float reduction = 1.0f / (float)(*nbEmplacement * current->nbPlaques);
 
 	for (unsigned int i = 0; i < current->nbPlaques; i++) {
@@ -577,11 +580,12 @@ bool lecture(Entree* entree, std::string input) {
 		entree->coutImpression = stof(inputData.back().substr(0, taillePremier));
 		entree->coutFabrication = stof(inputData.back().substr(taillePremier + 1, inputData.back().find(" ")));
 
-		return 1;
+		return 0;
 	}
 	else
 	{
-		return 0;
+		throw 3;
+		return 1;
 	}
 }
 
@@ -614,11 +618,12 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 		fichier << std::to_string(solution->coutTotal);
 
 		fichier.close();
-		return 1;
+		return 0;
 	}
 	else
 	{
-		return 0;
+		throw 98;
+		return 1;
 	}
 
 }
