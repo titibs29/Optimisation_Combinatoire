@@ -605,7 +605,7 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 
 		// les agencements de chaque plaque
 		for (unsigned int i = 0; i < solution->agencement.size(); i++) {
-			fichier << solution->agencement[i];
+			fichier << (int)solution->agencement[i];
 			if (i % *nbEmplacement == (*nbEmplacement - 1)) fichier << std::endl;
 			else fichier << ", ";
 		}
