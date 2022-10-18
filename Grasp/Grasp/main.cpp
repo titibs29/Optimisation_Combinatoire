@@ -59,6 +59,15 @@ void SwitchAgencement(Solution* current);
 void thread(Solution* current, Entree* entree);
 
 
+unsigned long int iterations = 0;
+unsigned long int plaquesGenerees = 0;
+unsigned long int newBest = 0;
+
+Entree entree;
+Solution best;
+Solution listCandidats[NBCANDIDATES];
+
+
 
 int main(int argc, char* argv[])
 {
@@ -73,17 +82,12 @@ int main(int argc, char* argv[])
 	unsigned int nbImpressions = 0;
 	unsigned int pireIndice = 0;
 	unsigned int random = 0;
-	unsigned long int iterations = 0;
-	unsigned long int plaquesGenerees = 0;
-	unsigned long int newBest = 0;
 	unsigned long int nbTotCandidats = 0;
 	unsigned long int microseconds = 0;     // duree
 	bool err = false;
 	float pireCout = 0.0;
 	std::vector<float> poidsImpression;
-	Entree entree;
-	Solution best;
-	Solution listCandidats[NBCANDIDATES];
+	
 	best.coutTotal = FLT_MAX;				//attribution de la valeur la plus importante possible a best
 
 	// gestion du temps
@@ -159,22 +163,9 @@ int main(int argc, char* argv[])
 
 
 		/* CHANGEMENTS LOCAUX */
-		for (i = 0; i < NBITERLOCAL; i++) {
-
-			random = rand() % NBCANDIDATES;
-			thread(&listCandidats[random], &entree);
-			iterations++;    // stat
-			plaquesGenerees++;   // stat
-
-			// si meilleur, remplace le meilleur actuel
-			if (listCandidats[random].coutTotal < best.coutTotal) {
-
-				newBest += 1;   // stat
-				best.nbPlaques = listCandidats[random].nbPlaques;
-				best.agencement.assign(listCandidats[random].agencement.begin(), listCandidats[random].agencement.end());
-				best.nbImpression.assign(listCandidats[random].nbImpression.begin(), listCandidats[random].nbImpression.end());
-				best.coutTotal = listCandidats[random].coutTotal;
-			}
+		for (i = 0; i < NBITERLOCAL; i++)
+		{
+			thread(&listCandidats[rand() % NBCANDIDATES], &entree);
 		}
 
 
@@ -256,23 +247,9 @@ int main(int argc, char* argv[])
 
 
 			/* CHANGEMENT LOCAUX */
-			for (i = 0; i < NBITERLOCAL; i++) {
-
-				random = rand() % NBCANDIDATES;
-				thread(&listCandidats[random], &entree);
-				iterations += 1;    // stat
-				plaquesGenerees++;   // stat
-
-				// si meilleur, remplace le meilleur actuel
-				if (listCandidats[random].coutTotal < best.coutTotal) {
-
-					newBest += 1;   // stat
-					best.nbPlaques = listCandidats[random].nbPlaques;
-					best.agencement.assign(listCandidats[random].agencement.begin(), listCandidats[random].agencement.end());
-					best.nbImpression.assign(listCandidats[random].nbImpression.begin(), listCandidats[random].nbImpression.end());
-					best.coutTotal = listCandidats[random].coutTotal;
-				}
-
+			for (i = 0; i < NBITERLOCAL; i++) 
+			{
+				thread(&listCandidats[rand() % NBCANDIDATES], &entree);
 			}
 
 
@@ -538,6 +515,19 @@ void thread(Solution* current,Entree* entree)
 		current->agencement.assign(agencementBis.begin(), agencementBis.end());
 		current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
 		current->coutTotal = coutBis;
+	}
+
+	iterations++;    // stat
+	plaquesGenerees++;   // stat
+
+	// si meilleur, remplace le meilleur actuel
+	if (current->coutTotal < best.coutTotal) 
+	{
+		newBest += 1;   // stat
+		best.nbPlaques = current->nbPlaques;
+		best.agencement.assign(current->agencement.begin(), current->agencement.end());
+		best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
+		best.coutTotal = current->coutTotal;
 	}
 }
 
