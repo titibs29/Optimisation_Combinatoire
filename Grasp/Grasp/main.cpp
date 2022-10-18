@@ -170,7 +170,11 @@ int main(int argc, char* argv[])
 
 
 		/* CHANGEMENTS LOCAUX */
-		thread(&listCandidats[rand() % NBCANDIDATES], entree);
+		for (int i = 0; i <  NBCANDIDATES; i++)
+		{
+			thread(&listCandidats[i], entree);
+		}
+		
 		
 
 
@@ -252,7 +256,11 @@ int main(int argc, char* argv[])
 
 
 			
-			thread(&listCandidats[rand() % NBCANDIDATES], entree);
+			/* CHANGEMENTS LOCAUX */
+			for (int i = 0; i < NBCANDIDATES; i++)
+			{
+				thread(&listCandidats[i], entree);
+			}
 			
 
 
@@ -492,6 +500,7 @@ void thread(Solution* current, Entree entree)
 {
 	//aquiring counting semaphore
 	//c_s.acquire();
+	
 	/* CHANGEMENT LOCAUX */
 	// NBITERLOCAL/NBCANDIDATES because this would have been selected on average this number of times
 	//'w' is not used inside the for loop.
