@@ -47,7 +47,7 @@ namespace GraspTest
 	{
 	public:
 
-		/*TEST_METHOD(lecture1)
+		TEST_METHOD(lecture1)
 		{
 			Entree file1, expected;
 			expected.nbCouverture = 3;
