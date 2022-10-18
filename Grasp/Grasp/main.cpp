@@ -13,12 +13,15 @@
 #define RUNTIME 15				// temps de la boucle (secondes)
 #define NBCANDIDATES 10			// nombre de candidats 
 #define NBITERLOCAL 100			// nombre d'iteration locale
-#define NBTHREADS 4				// (useless)nombre de threads
+#define NBTHREADS 4				// nombre de threads
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
 //MULTITHREADING
-std::counting_semaphore<NBTHREADS> c_s(NBTHREADS); // limit threads running
+std::vector<std::thread> threads;
+
+constexpr std::ptrdiff_t max_sema_threads{ NBTHREADS }; // {1} for binary semaphore
+std::counting_semaphore c_s{ max_sema_threads };// limit threads running
 std::mutex stat_variables_mtx;
 std::mutex best_mtx;
 
@@ -64,6 +67,7 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
 
 void SwitchAgencement(Solution* current);
 void thread(Solution* current, Entree entree);
+void joinAllThreads(void);
 
 
 unsigned long int iterations = 0;
@@ -172,9 +176,9 @@ int main(int argc, char* argv[])
 		/* CHANGEMENTS LOCAUX */
 		for (int i = 0; i <  NBCANDIDATES; i++)
 		{
-			thread(&listCandidats[i], entree);
+			threads.push_back(std::thread(thread, &listCandidats[i], entree));
 		}
-		
+		joinAllThreads();
 		
 
 
@@ -499,7 +503,7 @@ void SwitchAgencement(Solution* current) {
 void thread(Solution* current, Entree entree)
 {
 	//aquiring counting semaphore
-	//c_s.acquire();
+	c_s.acquire();
 	
 	/* CHANGEMENT LOCAUX */
 	// NBITERLOCAL/NBCANDIDATES because this would have been selected on average this number of times
@@ -537,16 +541,16 @@ void thread(Solution* current, Entree entree)
 		}
 
 		//lock mutex for stat variables
-		//stat_variables_mtx.lock();
+		stat_variables_mtx.lock();
 
 		iterations++;    // stat
 		plaquesGenerees++;   // stat
 
 		//unlock mutex for stat variables
-		//stat_variables_mtx.unlock();
+		stat_variables_mtx.unlock();
 
 		//lock mutex for best
-		//best_mtx.lock();
+		best_mtx.lock();
 
 		// si meilleur, remplace le meilleur actuel
 		if (current->coutTotal < best.coutTotal)
@@ -559,10 +563,10 @@ void thread(Solution* current, Entree entree)
 		}
 
 		//unlock mutex for best
-		//best_mtx.unlock();
+		best_mtx.unlock();
 
 		//releasing counting semaphore
-		//c_s.release();
+		c_s.release();
 	}
 }
 
@@ -651,4 +655,13 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 		return 1;
 	}
 
+}
+
+void joinAllThreads()
+{
+	std::vector<std::thread>::iterator it;
+	for (it = threads.begin(); it != threads.end(); ++it)
+	{
+		it->join();
+	}
 }
