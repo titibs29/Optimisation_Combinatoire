@@ -6,6 +6,8 @@
 #include <vector>  
 #include <string>
 #include <chrono>
+#include <thread>
+#include <semaphore>
 
 // parametres
 #define RUNTIME 15				// temps de la boucle (secondes)
@@ -14,6 +16,11 @@
 #define NBTHREADS 4				// (useless)nombre de threads
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
+
+//MULTITHREADING
+std::counting_semaphore<NBTHREADS> c_s(NBTHREADS); // limit threads running
+std::mutex stat_variables_mtx;
+std::mutex best_mtx;
 
 
 struct Entree {
@@ -163,10 +170,8 @@ int main(int argc, char* argv[])
 
 
 		/* CHANGEMENTS LOCAUX */
-		for (i = 0; i < NBITERLOCAL; i++)
-		{
-			thread(&listCandidats[rand() % NBCANDIDATES], entree);
-		}
+		thread(&listCandidats[rand() % NBCANDIDATES], entree);
+		
 
 
 		/*---LOOP---*/
@@ -246,11 +251,9 @@ int main(int argc, char* argv[])
 			}
 
 
-			/* CHANGEMENT LOCAUX */
-			for (i = 0; i < NBITERLOCAL; i++) 
-			{
-				thread(&listCandidats[rand() % NBCANDIDATES], entree);
-			}
+			
+			thread(&listCandidats[rand() % NBCANDIDATES], entree);
+			
 
 
 			// se finit si le temps depuis start est egal ou superieur a 60 secondes
@@ -484,50 +487,73 @@ void SwitchAgencement(Solution* current) {
     
 }
 
-
-void thread(Solution* current,Entree entree)
+//    /!\ 'Current' must be in one thread at a time
+void thread(Solution* current, Entree entree)
 {
-	// crée un nouvel agencement
-	std::vector<unsigned char> agencementBis;
-	std::vector<unsigned int> impressionsBis;
-	float coutBis = 0.0;
-	int i = 0;
-	impressionsBis.assign(current->nbPlaques, 0);
+	//aquiring counting semaphore
+	//c_s.acquire();
+	/* CHANGEMENT LOCAUX */
+	// NBITERLOCAL/NBCANDIDATES because this would have been selected on average this number of times
+	//'w' is not used inside the for loop.
+	for (int w = 0; w < NBITERLOCAL/NBCANDIDATES; w++)
+	{
+		// crée un nouvel agencement
+		std::vector<unsigned char> agencementBis;
+		std::vector<unsigned int> impressionsBis;
+		float coutBis = 0.0;
+		int i = 0;
+		impressionsBis.assign(current->nbPlaques, 0);
 
-	do {
-		agencementBis.assign(current->agencement.begin(), current->agencement.end());
+		do {
+			agencementBis.assign(current->agencement.begin(), current->agencement.end());
 
-		for (i= rand() % agencementBis.size()+1; i > 0; i--) {
-			agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
+			for (i = rand() % agencementBis.size() + 1; i > 0; i--) {
+				agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
+			}
+
+		} while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
+
+
+		// calcule le cout de ce nouvel agencement
+		impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
+		calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
+
+
+		// compare, garde le meilleur
+		if (coutBis < current->coutTotal) {
+
+			current->agencement.assign(agencementBis.begin(), agencementBis.end());
+			current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
+			current->coutTotal = coutBis;
 		}
 
-	} while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
+		//lock mutex for stat variables
+		//stat_variables_mtx.lock();
 
+		iterations++;    // stat
+		plaquesGenerees++;   // stat
 
-	// calcule le cout de ce nouvel agencement
-	impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
-	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
+		//unlock mutex for stat variables
+		//stat_variables_mtx.unlock();
 
+		//lock mutex for best
+		//best_mtx.lock();
 
-	// compare, garde le meilleur
-	if (coutBis < current->coutTotal) {
+		// si meilleur, remplace le meilleur actuel
+		if (current->coutTotal < best.coutTotal)
+		{
+			newBest += 1;   // stat
+			best.nbPlaques = current->nbPlaques;
+			best.agencement.assign(current->agencement.begin(), current->agencement.end());
+			best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
+			best.coutTotal = current->coutTotal;
+		}
 
-		current->agencement.assign(agencementBis.begin(), agencementBis.end());
-		current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
-		current->coutTotal = coutBis;
-	}
+		//unlock mutex for best
+		//best_mtx.unlock();
 
-	iterations++;    // stat
-	plaquesGenerees++;   // stat
-
-	// si meilleur, remplace le meilleur actuel
-	if (current->coutTotal < best.coutTotal) 
-	{
-		newBest += 1;   // stat
-		best.nbPlaques = current->nbPlaques;
-		best.agencement.assign(current->agencement.begin(), current->agencement.end());
-		best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
-		best.coutTotal = current->coutTotal;
+		//releasing counting semaphore
+		//c_s.release();
 	}
 }
 
