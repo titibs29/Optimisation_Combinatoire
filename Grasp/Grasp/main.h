@@ -23,15 +23,26 @@ struct Solution {
 };
 
 // fonctions
-bool lecture(Entree* entree, unsigned int* nbDataset);
-bool ecriture(Solution* solution, unsigned int* nbEmplacement, unsigned int* nbDataset);
+bool lecture(Entree* entree, std::string input);
+bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short int* nbDataset);
 
-void calculCout(std::vector<unsigned int>* agencement, std::vector<unsigned int>* nbImpression, unsigned int* nbPlaques, float* coutTotal, unsigned int* nbEmplacement, float* coutImpression, float* coutFabrication);
-bool checkValiditePlaque(std::vector<unsigned int>* agencement, unsigned int* nbCouverture);
-void impressionParPlaque(std::vector<unsigned int>* agencement, unsigned int* nbPlaques, std::vector<unsigned int>* nbImpressions, std::vector<unsigned int>* nbImpressionsParCouv, unsigned int* nbCouverture, unsigned int* nbEmplacement);
+void calculCout(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpression,
+	unsigned short int* nbPlaques,
+	unsigned char* nbEmplacement,
+	float* coutTotal,
+	float* coutImpression,
+	float* coutFabrication);
+bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* nbCouverture);
+void impressionParPlaque(std::vector<unsigned char>* agencement,
+	std::vector<unsigned int>* nbImpressions,
+	std::vector<unsigned int>* nbImpressionsParCouv,
+	unsigned short int* nbPlaques,
+	unsigned char* nbCouverture,
+	unsigned char* nbEmplacement);
 
-void init(Solution* current, unsigned int* nbEmplacements);
-void generationPlaques(Solution* current, std::vector<float>* poidsImpression, unsigned int* nbCouverture, unsigned int* nbEmplacement);
+void init(Solution* current, unsigned char* nbEmplacements);
+void generationPlaques(Solution* current, std::vector<float>* poidsImpression, unsigned char* nbCouverture, unsigned char* nbEmplacement);
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
 
 void SwitchAgencement(Solution* current);

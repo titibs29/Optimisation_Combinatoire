@@ -33,7 +33,7 @@ namespace GraspTest
 		TEST_METHOD(initFunction)
 		{
 			Solution sortie;
-			unsigned int nbEmplacement = 2;
+			unsigned char nbEmplacement = 2;
 			sortie.nbPlaques = 2;
 
 			init(&sortie, &nbEmplacement);
@@ -43,8 +43,8 @@ namespace GraspTest
 		}
 	};
 
-	TEST_CLASS(LectureTest)
-	{
+	TEST_CLASS(LectureTest) {
+
 	public:
 
 		TEST_METHOD(lecture1)
@@ -56,12 +56,12 @@ namespace GraspTest
 			expected.coutFabrication = 18676;
 			unsigned int nbDataset = 1;
 
-			lecture(&file1, &nbDataset);
+			lecture(&file1, "file1.in");
 
 			Assert::AreEqual(expected.nbCouverture, file1.nbCouverture);
 			Assert::AreEqual(expected.nbEmplacement, file1.nbEmplacement);
 			Assert::AreEqual(expected.coutImpression, file1.coutImpression);
 			Assert::AreEqual(expected.coutFabrication, file1.coutFabrication);
-		}*/
+		}
 	};
 }
