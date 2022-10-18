@@ -56,7 +56,7 @@ void generationPlaques(Solution* current, std::vector<float> *poidsImpression, u
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
 
 void SwitchAgencement(Solution* current);
-void thread(Solution* current, Entree* entree);
+void thread(Solution* current, Entree entree);
 
 
 unsigned long int iterations = 0;
@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 		/* CHANGEMENTS LOCAUX */
 		for (i = 0; i < NBITERLOCAL; i++)
 		{
-			thread(&listCandidats[rand() % NBCANDIDATES], &entree);
+			thread(&listCandidats[rand() % NBCANDIDATES], entree);
 		}
 
 
@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
 			/* CHANGEMENT LOCAUX */
 			for (i = 0; i < NBITERLOCAL; i++) 
 			{
-				thread(&listCandidats[rand() % NBCANDIDATES], &entree);
+				thread(&listCandidats[rand() % NBCANDIDATES], entree);
 			}
 
 
@@ -485,7 +485,7 @@ void SwitchAgencement(Solution* current) {
 }
 
 
-void thread(Solution* current,Entree* entree)
+void thread(Solution* current,Entree entree)
 {
 	// crée un nouvel agencement
 	std::vector<unsigned char> agencementBis;
@@ -498,15 +498,15 @@ void thread(Solution* current,Entree* entree)
 		agencementBis.assign(current->agencement.begin(), current->agencement.end());
 
 		for (i= rand() % agencementBis.size()+1; i > 0; i--) {
-			agencementBis[rand() % agencementBis.size()] = (rand() % entree->nbCouverture);
+			agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
 		}
 
-	} while (!checkValiditePlaque(&agencementBis, &entree->nbCouverture));
+	} while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
 
 
 	// calcule le cout de ce nouvel agencement
-	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques, &entree->nbCouverture, &entree->nbEmplacement);
-	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree->nbEmplacement, &coutBis, &entree->coutImpression, &entree->coutFabrication);
+	impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
+	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
 
 
 	// compare, garde le meilleur
