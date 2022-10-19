@@ -11,17 +11,15 @@
 
 // parametres
 #define RUNTIME 15				// temps de la boucle (secondes)
-#define NBCANDIDATES 10			// nombre de candidats 
+#define NBCANDIDATES 10			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
 #define NBITERLOCAL 100			// nombre d'iteration locale
-#define NBTHREADS 4				// nombre de threads
+#define NBTHREADS 6				// nombre de threads
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
 //MULTITHREADING
 std::vector<std::thread> threads;
 
-constexpr std::ptrdiff_t max_sema_threads{ NBTHREADS }; // {1} for binary semaphore
-std::counting_semaphore c_s{ max_sema_threads };// limit threads running
 std::mutex stat_variables_mtx;
 std::mutex best_mtx;
 
@@ -40,6 +38,7 @@ struct Solution {
 	std::vector<unsigned char> agencement; // max 125
 	float coutTotal = FLT_MAX;
 	bool actif = true;
+	bool isUsedInThread = false;
 };
 
 // fonctions
@@ -174,10 +173,19 @@ int main(int argc, char* argv[])
 
 
 		/* CHANGEMENTS LOCAUX */
-		for (int i = 0; i <  NBCANDIDATES; i++)
+		for (int i = 0; i <  NBTHREADS; i++)
 		{
+			int r;
+			do
+			{
+				r = rand() % NBCANDIDATES;
+			} while (listCandidats[r].isUsedInThread);
+
+			//Reserve candidate for not being chosen in another thread
+			listCandidats[r].isUsedInThread = false;
+
 			//starting all threads
-			threads.push_back(std::thread(thread, &listCandidats[i], entree));
+			threads.push_back(std::thread(thread, &listCandidats[r], entree));
 		}
 		//wait for all threads to finish executing
 		joinAllThreads();
@@ -263,10 +271,19 @@ int main(int argc, char* argv[])
 
 			
 			/* CHANGEMENTS LOCAUX */
-			for (int i = 0; i < NBCANDIDATES; i++)
+			for (int i = 0; i < NBTHREADS; i++)
 			{
+				int r;
+				do
+				{
+					r = rand() % NBCANDIDATES;
+				} while (listCandidats[r].isUsedInThread);
+
+				//Reserve candidate for not being chosen in another thread
+				listCandidats[r].isUsedInThread = false;
+
 				//starting all threads
-				threads.push_back(std::thread(thread, &listCandidats[i], entree));
+				threads.push_back(std::thread(thread, &listCandidats[r], entree));
 			}
 			//wait for all threads to finish executing
 			joinAllThreads();
@@ -507,13 +524,9 @@ void SwitchAgencement(Solution* current) {
 //    /!\ 'Current' must be in one thread at a time
 void thread(Solution* current, Entree entree)
 {
-	//aquiring counting semaphore
-	c_s.acquire();
-	
 	/* CHANGEMENT LOCAUX */
-	// NBITERLOCAL/NBCANDIDATES because this would have been selected on average this number of times
 	//'w' is not used inside the for loop.
-	for (int w = 0; w < NBITERLOCAL/NBCANDIDATES; w++)
+	for (int w = 0; w < NBITERLOCAL; w++)
 	{
 		// crée un nouvel agencement
 		std::vector<unsigned char> agencementBis;
@@ -570,8 +583,8 @@ void thread(Solution* current, Entree entree)
 		//unlock mutex for best
 		best_mtx.unlock();
 
-		//releasing counting semaphore
-		c_s.release();
+		//free candidate
+		current->isUsedInThread = false;
 	}
 }
 
