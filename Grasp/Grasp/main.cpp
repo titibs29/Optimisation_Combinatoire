@@ -263,8 +263,9 @@ int main(int argc, char* argv[])
 			/* CHANGEMENTS LOCAUX */
 			for (int i = 0; i < NBCANDIDATES; i++)
 			{
-				thread(&listCandidats[i], entree);
+				threads.push_back(std::thread(thread, &listCandidats[i], entree));
 			}
+			joinAllThreads();
 			
 
 
