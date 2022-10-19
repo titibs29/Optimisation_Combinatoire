@@ -660,9 +660,9 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 
 void joinAllThreads()
 {
-	std::vector<std::thread>::iterator it;
-	for (it = threads.begin(); it != threads.end(); ++it)
+	while (!threads.empty())
 	{
-		it->join();
+		threads.front().join();
+		threads.erase(threads.begin());
 	}
 }
