@@ -280,12 +280,15 @@ int main(int argc, char* argv[])
 
 
 /// <summary>
-/// calcule le cout de production des couvertures
+/// calcul du cout de production du candidat
 /// </summary>
-/// <param name="current"></param>
+/// <param name="agencement"></param>
+/// <param name="nbImpression"></param>
+/// <param name="nbPlaques"></param>
 /// <param name="nbEmplacement"></param>
-/// <param name="coutImpression"> cout par impression</param>
-/// <param name="coutFabrication"> cout par fabrication</param>
+/// <param name="coutTotal"></param>
+/// <param name="coutImpression"></param>
+/// <param name="coutFabrication"></param>
 void calculCout(std::vector<unsigned char>* agencement,
 	std::vector<unsigned int>* nbImpression,
 	unsigned short int* nbPlaques,
@@ -303,10 +306,12 @@ void calculCout(std::vector<unsigned char>* agencement,
 }
 
 /// <summary>
-/// calcule le nombre d'impression de chaque plaques (non-optimise)
+/// calcule le nombre d'impression de chaque plaque (non-optimise)
 /// </summary>
-/// <param name="current"></param>
+/// <param name="agencement"></param>
 /// <param name="nbImpressions"></param>
+/// <param name="nbImpressionsParCouv"></param>
+/// <param name="nbPlaques"></param>
 /// <param name="nbCouverture"></param>
 /// <param name="nbEmplacement"></param>
 void impressionParPlaque(std::vector<unsigned char>* agencement,
@@ -317,7 +322,7 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	unsigned char* nbEmplacement) {
 
 	// creation du buffer de valeurs
-	std::vector<unsigned int> bufferIteration(*nbCouverture, 0);
+	std::vector<unsigned int> bufferIteration(*nbCouverture, 0), bufferPlaque(*nbCouverture, 0);
 
 	// lecture du nombre d'iteration de chaque couverture dans les agencements
 	for (unsigned int i = 0; i < agencement->size(); i++) {
@@ -326,16 +331,19 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	// division du nombre d'impression par le nombre d'iteration
 	for (unsigned int i = 0; i < bufferIteration.size(); i++) {
-		bufferIteration[i] = ceil(nbImpressionsParCouv->at(i) / bufferIteration[i]);
+		bufferIteration[i] = ceil(nbImpressionsParCouv->at(i) / (float)bufferIteration[i]);
 	}
 
 	// determination du nombre de passage minimum par chaque plaque
 	for (unsigned int plaque = 0; plaque < *nbPlaques; plaque++) {
+		// on calcule le cout de la plaque et on le place
 		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) {
+			// si le nombre d'impression est plus importante, la remplace
 			if (nbImpressions->at(plaque) < bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)]) {
 				nbImpressions->at(plaque) = bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)];
 			}
 		}
+
 	}
 
 }
