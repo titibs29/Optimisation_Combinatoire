@@ -7,17 +7,17 @@
 #include <chrono>
 
 struct Entree {
-	unsigned int nbCouverture = 0;
-	unsigned int nbEmplacement = 0;
+	unsigned char nbCouverture = 0;
+	unsigned char nbEmplacement = 0;
 	std::vector<unsigned int> nbImpressionParCouverture;
 	float coutImpression = 0.0;
 	float coutFabrication = 0.0;
 };
 
 struct Solution {
-	unsigned int nbPlaques = 0;
+	unsigned short int nbPlaques = 0;
 	std::vector<unsigned int> nbImpression;
-	std::vector<unsigned int> agencement;
+	std::vector<unsigned char> agencement;
 	float coutTotal = FLT_MAX;
 	bool actif = true;
 };
