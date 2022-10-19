@@ -176,8 +176,10 @@ int main(int argc, char* argv[])
 		/* CHANGEMENTS LOCAUX */
 		for (int i = 0; i <  NBCANDIDATES; i++)
 		{
+			//starting all threads
 			threads.push_back(std::thread(thread, &listCandidats[i], entree));
 		}
+		//wait for all threads to finish executing
 		joinAllThreads();
 		
 
@@ -263,8 +265,10 @@ int main(int argc, char* argv[])
 			/* CHANGEMENTS LOCAUX */
 			for (int i = 0; i < NBCANDIDATES; i++)
 			{
+				//starting all threads
 				threads.push_back(std::thread(thread, &listCandidats[i], entree));
 			}
+			//wait for all threads to finish executing
 			joinAllThreads();
 			
 
