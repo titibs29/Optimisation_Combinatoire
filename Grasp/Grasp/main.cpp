@@ -323,30 +323,35 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement) {
 
-	// creation du buffer de valeurs
-	std::vector<unsigned int> bufferIteration(*nbCouverture, 0), bufferPlaque(*nbCouverture, 0);
+	// creer matrice (indices contraintes inversees, matrice unitaire, impressions inversees)
+	// la derniere ligne contient un -1 pour chaque plaques, un 0 sinon
 
-	// lecture du nombre d'iteration de chaque couverture dans les agencements
-	for (unsigned int i = 0; i < agencement->size(); i++) {
-		bufferIteration[agencement->at(i)] += 1;
-	}
+	while(!estOptimal()){
+		// choix colonne pivot
 
-	// division du nombre d'impression par le nombre d'iteration
-	for (unsigned int i = 0; i < bufferIteration.size(); i++) {
-		bufferIteration[i] = ceil(nbImpressionsParCouv->at(i) / (float)bufferIteration[i]);
-	}
+		// choix ligne pivot
 
-	// determination du nombre de passage minimum par chaque plaque
-	for (unsigned int plaque = 0; plaque < *nbPlaques; plaque++) {
-		// on calcule le cout de la plaque et on le place
-		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) {
-			// si le nombre d'impression est plus importante, la remplace
-			if (nbImpressions->at(plaque) < bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)]) {
-				nbImpressions->at(plaque) = bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)];
+		// pivotage
+		// diviser chaque membre de la ligne du pivot par le pivot
+
+		// calcul des nouvelles cases de la matrice
+		for (int ligne = 0; ligne < nbLigneMatrice; ligne++) {
+			for (int col = 0; col < nbColMatrice; col++) {
+				// case = case - (element lignePivot* element ColPivot)
 			}
 		}
 
+		// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
+
+
 	}
+	// on a la matrice optimale, on extrait les valeurs souhaitée
+
+}
+
+bool estOptimal() {
+	// la matrice est optimale quand aucun element de la dernière ligne n'est inferieur a zero
+
 
 }
 

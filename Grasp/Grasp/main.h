@@ -47,3 +47,6 @@ void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* p
 
 void SwitchAgencement(Solution* current);
 void thread(Solution* current, Entree* entree);
+
+// fonctions de linProg
+bool estOptimal();
