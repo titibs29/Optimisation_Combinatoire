@@ -248,7 +248,9 @@ int main(int argc, char* argv[])
 		// ecriture du fichier de sortie
 		err = ecriture(&best, &entree.nbEmplacement, &nbdataset);
 		if (err) throw 99;
-		system(("notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
+		system(("start notepad output/O" + std::to_string(nbdataset) + ".out").c_str()); // ouvre le fichier de sortie
+		system(("start notepad Dataset-Dev/I" + std::to_string(nbdataset) + ".in").c_str()); // ouvre le fichier en entrée
+
 
 
 	}
