@@ -323,8 +323,21 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement) {
 
-	// creer matrice (indices contraintes inversees, matrice unitaire, impressions inversees)
+	// creation d'une matrice de la bonne taille contenant des 0
+	std::vector<std::vector<float>> matrice((*nbCouverture + 1), std::vector<float>((*nbPlaques + *nbCouverture + 1), 0.0f));
+	
+
+	// creer matrice (indices contraintes inverses, matrice unitaire, impressions inversees)
 	// la derniere ligne contient un -1 pour chaque plaques, un 0 sinon
+
+	for (unsigned short i = 0; i < *nbPlaques; i++) {
+		for (unsigned short j = 0; j < *nbEmplacement; j++) {
+			// indices de contraintes inverses
+
+
+		}
+	}
+	
 
 	while(!estOptimal()){
 		// choix colonne pivot
