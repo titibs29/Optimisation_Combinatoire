@@ -322,6 +322,9 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	unsigned short int* nbPlaques,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement) {
+	int colPivot = 0,lignePlusPetit = INT_MAX, lignePivot = 0;
+	int iter = 0;
+	float pivot = 0.0f;
 
 	// creation d'une matrice de la bonne taille contenant des 0
 	std::vector<std::vector<float>> matrice((*nbCouverture + 1), std::vector<float>((*nbPlaques + *nbCouverture + 1), 0.0f));
@@ -334,7 +337,10 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	// indices de contraintes inverses
 	for (unsigned short i = 0; i < *nbPlaques; i++) {
 		for (unsigned short j = 0; j < *nbEmplacement; j++) {
-			matrice.at(agencement->at((i * (*nbEmplacement)) + j)).at(i)-=1.0;
+			// indices de contraintes inverses
+			matrice.at(agencement->at((i * (*nbEmplacement)) + j)).at(i) -= 1.0;
+
+
 		}
 		// ligne resultat
 		matrice.at(*nbCouverture).at(i) = -1;
@@ -351,25 +357,62 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	
 
-	while(!estOptimal()){
-		// choix colonne pivot
+	while (!estOptimal(&matrice, nbCouverture) && iter < *nbPlaques) {
+		iter++;
+		colPivot = 0;
+		lignePlusPetit = FLT_MAX;
 
+		// choix colonne pivot
+		for (int i = 0; i < matrice.at(0).size(); i++)
+		{
+
+			// choix de la colonne ayant la valeur la plus faible
+			if (matrice.at(*nbCouverture).at(i) < matrice.at(*nbCouverture).at(colPivot)) {
+				colPivot = i;
+			}
+		}
 
 		// choix ligne pivot
+		for (int i = 0; i < matrice.size() - 1; i++) {
 
+			if (matrice.at(i).at(colPivot) != 0
+				&&
+				(matrice.at(i).at(*nbPlaques + *nbCouverture) / matrice.at(i).at(colPivot)) < lignePlusPetit) {
+
+				lignePivot = i;
+				lignePlusPetit = matrice.at(i).at(*nbPlaques + *nbCouverture) / matrice.at(i).at(colPivot);
+
+			}
+
+		}
 
 		// pivotage
 		// diviser chaque membre de la ligne du pivot par le pivot
+		pivot = matrice.at(lignePivot).at(colPivot);
+		for (int col = 0; col < matrice.at(0).size(); col++) {
+
+			matrice.at(lignePivot).at(col) /= pivot;
+
+		}
+
 
 		// calcul des nouvelles cases de la matrice
-		//for (int ligne = 0; ligne < nbLigneMatrice; ligne++) {
-		//	for (int col = 0; col < nbColMatrice; col++) {
-		//		// case = case - (element lignePivot* element ColPivot)
-		//	}
-		//}
+		for (int ligne = 0; ligne < matrice.size(); ligne++) {
+			for (int col = 0; col < matrice.at(0).size(); col++) {
+				if (ligne != lignePivot && col != colPivot) {
+					matrice.at(ligne).at(col) -=
+						((matrice.at(lignePivot).at(col) * matrice.at(ligne).at(colPivot))
+							/ matrice.at(lignePivot).at(colPivot));
+				}
+			}
+		}
 
-	//	// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
-
+		// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
+		for (int ligne = 0; ligne < matrice.size(); ligne++) {
+			if (ligne != lignePivot) {
+				matrice.at(ligne).at(colPivot) = 0;
+			}
+		}
 
 	}
 	// on a la matrice optimale, on extrait les valeurs souhaitées
@@ -378,9 +421,9 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 bool estOptimal(std::vector<std::vector<float>> *matrice, unsigned char *nbCouverture) {
 	// la matrice est optimale quand aucun element de la dernière ligne n'est inferieur a zero
-	for each (float element in matrice->at(*nbCouverture))
+	for (int i =0;i< matrice->at(*nbCouverture).size();i++)
 	{
-		if (element < 0) return false;
+		if (matrice->at(*nbCouverture).at(i) < 0) return false;
 	
 	}
 	return true;

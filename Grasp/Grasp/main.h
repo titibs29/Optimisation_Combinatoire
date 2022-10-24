@@ -41,6 +41,7 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement);
 
+
 void init(Solution* current, unsigned char* nbEmplacements);
 void generationPlaques(Solution* current, std::vector<float>* poidsImpression, unsigned char* nbCouverture, unsigned char* nbEmplacement);
 void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
@@ -49,5 +50,5 @@ void SwitchAgencement(Solution* current);
 void thread(Solution* current, Entree* entree);
 
 // fonctions de linProg
-bool estOptimal();
-void show(std::vector<std::vector<float>> matrice);
+bool estOptimal(std::vector<std::vector<float>>* matrice, unsigned char* nbCouverture);
+//void show(std::vector<std::vector<float>> matrice);

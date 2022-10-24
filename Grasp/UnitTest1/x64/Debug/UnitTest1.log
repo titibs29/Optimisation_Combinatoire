@@ -1,14 +1,26 @@
 ﻿  GraspTest.cpp
 C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(63,22): warning C4244: '=' : conversion de 'float' en 'unsigned short', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(502,48): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(583,49): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(55,1): warning C4305: '=' : troncation de 'double' à 'float'
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(363,20): warning C4244: '=' : conversion de 'float' en 'int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(363,27): warning C4056: dépassement d'une opération arithmétique de constante en virgule flottante
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(383,67): warning C4244: '=' : conversion de '_Ty' en 'int', perte possible de données
+          with
+          [
+              _Ty=float
+          ]
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(554,48): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(635,49): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(72,1): warning C4305: '=' : troncation de 'double' à 'float'
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(254,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+          with
+          [
+              _Ty=unsigned int
+          ]
 D:\Program Files\VisualStudio\22\community\VC\Tools\MSVC\14.32.31326\include\xutility(5320,29): warning C4805: '==' : mélange risqué de type 'bool' et de type 'const _Ty' dans l'opération
           with
           [
               _Ty=int
           ]
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(408): message : voir la référence à l'instanciation de la fonction modèle '__int64 std::count<std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,int>(const _InIt,const _InIt,const _Ty &)' en cours de compilation
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(460): message : voir la référence à l'instanciation de la fonction modèle '__int64 std::count<std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,int>(const _InIt,const _InIt,const _Ty &)' en cours de compilation
           with
           [
               _InIt=std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,
