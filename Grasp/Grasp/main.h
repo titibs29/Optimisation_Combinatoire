@@ -50,3 +50,4 @@ void thread(Solution* current, Entree* entree);
 
 // fonctions de linProg
 bool estOptimal();
+void show(std::vector<std::vector<float>> matrice);

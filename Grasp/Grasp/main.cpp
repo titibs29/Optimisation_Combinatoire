@@ -330,13 +330,25 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	// creer matrice (indices contraintes inverses, matrice unitaire, impressions inversees)
 	// la derniere ligne contient un -1 pour chaque plaques, un 0 sinon
 
+
+	// indices de contraintes inverses
 	for (unsigned short i = 0; i < *nbPlaques; i++) {
 		for (unsigned short j = 0; j < *nbEmplacement; j++) {
-			// indices de contraintes inverses
-
-
+			matrice.at(agencement->at((i * (*nbEmplacement)) + j)).at(i)-=1.0;
 		}
+		// ligne resultat
+		matrice.at(*nbCouverture).at(i) = -1;
 	}
+
+	for (int i = 0; i < *nbCouverture; i++) {
+		// matrice unitaire
+		matrice.at(i).at(*nbPlaques + i) = 1;
+
+		// nombre d'impressions
+		matrice.at(i).at(*nbPlaques + *nbCouverture) -= nbImpressionsParCouv->at(i);
+	}
+
+
 	
 
 	while(!estOptimal()){
@@ -348,13 +360,13 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 		// diviser chaque membre de la ligne du pivot par le pivot
 
 		// calcul des nouvelles cases de la matrice
-		for (int ligne = 0; ligne < nbLigneMatrice; ligne++) {
-			for (int col = 0; col < nbColMatrice; col++) {
-				// case = case - (element lignePivot* element ColPivot)
-			}
-		}
+		//for (int ligne = 0; ligne < nbLigneMatrice; ligne++) {
+		//	for (int col = 0; col < nbColMatrice; col++) {
+		//		// case = case - (element lignePivot* element ColPivot)
+		//	}
+		//}
 
-		// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
+	//	// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
 
 
 	}
@@ -362,10 +374,21 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 }
 
-bool estOptimal() {
+bool estOptimal(std::vector<std::vector<float>> matrice) {
 	// la matrice est optimale quand aucun element de la dernière ligne n'est inferieur a zero
+	matrice.at();
+	return 0;
+}
 
 
+void show(std::vector<std::vector<float>> matrice) {
+	// cette fonction affiche la matrice
+	for (int ligne = 0; ligne < matrice.size(); ligne++) {
+		for (int col = 0; col < matrice[0].size(); col++) {
+			std::cout << matrice[ligne][col] << " ";
+		}
+		std::cout << std::endl;
+	}
 }
 
 /// <summary>
