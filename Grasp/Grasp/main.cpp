@@ -8,6 +8,7 @@
 #include <chrono>
 #include <thread>
 #include <semaphore>
+#include <mutex>
 
 // parametres
 #define RUNTIME 15				// temps de la boucle (secondes)
@@ -353,6 +354,8 @@ void calculCout(std::vector<unsigned char>* agencement,
 	float* coutFabrication) {
 
 	unsigned int totImpressions = 0;
+
+
 	for (unsigned int i = 0; i < *nbPlaques; i++) {
 		totImpressions += nbImpression->at(i);
 	}
@@ -389,9 +392,12 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	// determination du nombre de passage minimum par chaque plaque
 	for (unsigned int plaque = 0; plaque < *nbPlaques; plaque++) {
-		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) {
-			if (nbImpressions->at(plaque) < bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)]) {
-				nbImpressions->at(plaque) = bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)];
+		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) 
+		{
+			int o = plaque * (*nbEmplacement) + emplacement;
+			if (nbImpressions->at(plaque) < bufferIteration.at(agencement->at(o)))
+			{
+				nbImpressions->at(plaque) = bufferIteration.at(agencement->at(o));
 			}
 		}
 	}
@@ -438,7 +444,7 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 		for (unsigned int j = 0; j < *nbEmplacement; j++) {
 
 			// peuplement des deux premiers
-			if (poidsImpression[1] < poidsImpression[0]) {
+			if (poidsImpression->at(1) < poidsImpression->at(0)) {
 				c1 = 0;
 				c2 = 1;
 			}
@@ -533,6 +539,8 @@ void thread(Solution* current, Entree entree)
 		std::vector<unsigned int> impressionsBis;
 		float coutBis = 0.0;
 		int i = 0;
+
+
 		impressionsBis.assign(current->nbPlaques, 0);
 
 		do {
@@ -544,11 +552,13 @@ void thread(Solution* current, Entree entree)
 
 		} while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
 
-
+		
 		// calcule le cout de ce nouvel agencement
+		//std::cout << "A" << std::endl;
 		impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
+		//std::cout << "APRES" << std::endl;
 		calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
-
+		//std::cout << "APRES2" << std::endl;
 
 		// compare, garde le meilleur
 		if (coutBis < current->coutTotal) {
@@ -567,6 +577,7 @@ void thread(Solution* current, Entree entree)
 		//unlock mutex for stat variables
 		stat_variables_mtx.unlock();
 
+		
 		//lock mutex for best
 		best_mtx.lock();
 
