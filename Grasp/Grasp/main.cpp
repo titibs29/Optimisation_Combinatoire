@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
 				} while (listCandidats[r].isUsedInThread);
 
 				//Reserve candidate for not being chosen in another thread
-				listCandidats[r].isUsedInThread = false;
+				listCandidats[r].isUsedInThread = true;
 
 				//starting all threads
 				threads.push_back(std::thread(thread, &listCandidats[r], entree));
