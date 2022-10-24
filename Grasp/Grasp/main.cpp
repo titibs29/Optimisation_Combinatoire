@@ -11,10 +11,10 @@
 #include <mutex>
 
 // parametres
-#define RUNTIME 15				// temps de la boucle (secondes)
+#define RUNTIME 60				// temps de la boucle (secondes)
 #define NBCANDIDATES 10			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
-#define NBITERLOCAL 100			// nombre d'iteration locale
-#define NBTHREADS 6				// nombre de threads
+#define NBITERLOCAL 10000			// nombre d'iteration locale
+#define NBTHREADS 5				// nombre de threads
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
@@ -560,11 +560,8 @@ void thread(Solution* current, Entree entree)
 
 		
 		// calcule le cout de ce nouvel agencement
-		//std::cout << "A" << std::endl;
 		impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
-		//std::cout << "APRES" << std::endl;
 		calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
-		//std::cout << "APRES2" << std::endl;
 
 		// compare, garde le meilleur
 		if (coutBis < current->coutTotal) {
@@ -574,16 +571,6 @@ void thread(Solution* current, Entree entree)
 			current->coutTotal = coutBis;
 		}
 
-		//lock mutex for stat variables
-		stat_variables_mtx.lock();
-
-		iterations++;    // stat
-		plaquesGenerees++;   // stat
-
-		//unlock mutex for stat variables
-		stat_variables_mtx.unlock();
-
-		
 		//lock mutex for best
 		best_mtx.lock();
 
@@ -599,10 +586,18 @@ void thread(Solution* current, Entree entree)
 
 		//unlock mutex for best
 		best_mtx.unlock();
-
-		//free candidate
-		current->isUsedInThread = false;
+		
 	}
+	//lock mutex for stat variables
+	stat_variables_mtx.lock();
+
+	iterations+= NBITERLOCAL;    // stat
+	plaquesGenerees+= NBITERLOCAL;   // stat
+
+	//unlock mutex for stat variables
+	stat_variables_mtx.unlock();
+	//free candidate
+	current->isUsedInThread = false;
 }
 
 /// <summary>
