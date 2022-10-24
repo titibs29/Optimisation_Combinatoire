@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
 	unsigned int nbImpressions = 0;
 	unsigned int pireIndice = 0;
 	unsigned int random = 0;
+	unsigned int totalImpression = 0;
 	unsigned long int iterations = 0;
 	unsigned long int plaquesGenerees = 0;
 	unsigned long int newBest = 0;
@@ -87,16 +88,18 @@ int main(int argc, char* argv[])
 
 				plaquesGenerees++;   // stat
 			} while (!checkValiditePlaque(&listCandidats[candidat].agencement, &entree.nbCouverture));
-			impressionParPlaque(&listCandidats[candidat].agencement, 
-				&listCandidats[candidat].nbImpression, 
-				&entree.nbImpressionParCouverture, 
-				&listCandidats[candidat].nbPlaques, 
+			totalImpression = 0;
+			impressionParPlaque(&listCandidats[candidat].agencement,
+				&listCandidats[candidat].nbImpression,
+				&entree.nbImpressionParCouverture,
+				&listCandidats[candidat].nbPlaques,
+				&totalImpression,
 				&entree.nbCouverture, 
 				&entree.nbEmplacement);
-			calculCout(&listCandidats[candidat].agencement, 
-				&listCandidats[candidat].nbImpression, 
+			calculCout(
 				&listCandidats[candidat].nbPlaques, 
 				&entree.nbEmplacement,
+				&totalImpression,
 				&listCandidats[candidat].coutTotal,
 				&entree.coutImpression,
 				&entree.coutFabrication);
@@ -180,16 +183,18 @@ int main(int argc, char* argv[])
 
 						plaquesGenerees++;   // stat
 					} while (!checkValiditePlaque(&listCandidats[i].agencement, &entree.nbCouverture));
+					totalImpression = 0;
 					impressionParPlaque(&listCandidats[i].agencement,
 						&listCandidats[i].nbImpression,
 						&entree.nbImpressionParCouverture,
 						&listCandidats[i].nbPlaques,
+						&totalImpression,
 						&entree.nbCouverture,
 						&entree.nbEmplacement);
-					calculCout(&listCandidats[i].agencement,
-						&listCandidats[i].nbImpression,
+					calculCout(
 						&listCandidats[i].nbPlaques,
 						&entree.nbEmplacement,
+						&totalImpression,
 						&listCandidats[i].coutTotal,
 						&entree.coutImpression,
 						&entree.coutFabrication);
@@ -291,20 +296,18 @@ int main(int argc, char* argv[])
 /// <param name="coutTotal"></param>
 /// <param name="coutImpression"></param>
 /// <param name="coutFabrication"></param>
-void calculCout(std::vector<unsigned char>* agencement,
-	std::vector<unsigned int>* nbImpression,
+void calculCout(
 	unsigned short int* nbPlaques,
 	unsigned char* nbEmplacement,
+	unsigned int *totalImpression,
 	float* coutTotal,
 	float* coutImpression,
 	float* coutFabrication) {
 
-	unsigned int totImpressions = 0;
-	for (unsigned int i = 0; i < *nbPlaques; i++) {
-		totImpressions += nbImpression->at(i);
-	}
+	*totalImpression = 0;
 
-	*coutTotal = (totImpressions * *coutImpression) + (*nbPlaques * *coutFabrication);
+
+	*coutTotal = (*totalImpression * *coutImpression) + (*nbPlaques * *coutFabrication);
 }
 
 /// <summary>
@@ -320,45 +323,47 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	std::vector<unsigned int>* nbImpressions,
 	std::vector<unsigned int>* nbImpressionsParCouv,
 	unsigned short int* nbPlaques,
+	unsigned int *totalImpression,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement) {
-	int colPivot = 0,lignePlusPetit = INT_MAX, lignePivot = 0;
-	int iter = 0;
+
+	int colPivot = 0, lignePivot = 0;
+	float lignePlusPetit = -FLT_MAX;
 	float pivot = 0.0f;
 
-	// creation d'une matrice de la bonne taille contenant des 0
-	std::vector<std::vector<float>> matrice((*nbCouverture + 1), std::vector<float>((*nbPlaques + *nbCouverture + 1), 0.0f));
-	
 
-	// creer matrice (indices contraintes inverses, matrice unitaire, impressions inversees)
-	// la derniere ligne contient un -1 pour chaque plaques, un 0 sinon
+	std::vector<std::vector<float>> matrice(
+		(*nbPlaques + 1),											// nombre de lignes
+		std::vector<float>((*nbCouverture + *nbPlaques + 1),			// nombre de colonnes
+			0.0f));
 
 
-	// indices de contraintes inverses
+	// remplissage matrice
 	for (unsigned short i = 0; i < *nbPlaques; i++) {
 		for (unsigned short j = 0; j < *nbEmplacement; j++) {
-			// indices de contraintes inverses
-			matrice.at(agencement->at((i * (*nbEmplacement)) + j)).at(i) -= 1.0;
+			// indices de contraintes 
+			matrice.at(i).at(agencement->at((i * (*nbEmplacement)) + j)) += 1.0;
 
 
 		}
 		// ligne resultat
-		matrice.at(*nbCouverture).at(i) = -1;
+		matrice.at(i).at(*nbCouverture + *nbPlaques) = 1;
+	}
+
+	for (int i = 0; i < *nbPlaques; i++) {
+		// matrice unitaire
+		matrice.at(i).at(*nbCouverture + i) = 1;
+
 	}
 
 	for (int i = 0; i < *nbCouverture; i++) {
-		// matrice unitaire
-		matrice.at(i).at(*nbPlaques + i) = 1;
 
 		// nombre d'impressions
-		matrice.at(i).at(*nbPlaques + *nbCouverture) -= nbImpressionsParCouv->at(i);
+		matrice.at(*nbPlaques).at(i) -= nbImpressionsParCouv->at(i);
 	}
 
 
-	
-
-	while (!estOptimal(&matrice, nbCouverture) && iter < *nbPlaques) {
-		iter++;
+	while (!estOptimal(&matrice)) {
 		colPivot = 0;
 		lignePlusPetit = FLT_MAX;
 
@@ -366,45 +371,62 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 		for (int i = 0; i < matrice.at(0).size(); i++)
 		{
 
-			// choix de la colonne ayant la valeur la plus faible
-			if (matrice.at(*nbCouverture).at(i) < matrice.at(*nbCouverture).at(colPivot)) {
+			// choix de la colonne ayant la valeur la plus faible sous le 0
+			if (matrice.at(*nbPlaques).at(i) < 0 &&
+				matrice.at(*nbPlaques).at(i) < matrice.at(*nbPlaques).at(colPivot)) {
 				colPivot = i;
 			}
 		}
 
+
+
 		// choix ligne pivot
 		for (int i = 0; i < matrice.size() - 1; i++) {
-
 			if (matrice.at(i).at(colPivot) != 0
 				&&
-				(matrice.at(i).at(*nbPlaques + *nbCouverture) / matrice.at(i).at(colPivot)) < lignePlusPetit) {
+				(matrice.at(i).at(*nbCouverture + *nbPlaques) / matrice.at(i).at(colPivot)) < lignePlusPetit) {
 
 				lignePivot = i;
-				lignePlusPetit = matrice.at(i).at(*nbPlaques + *nbCouverture) / matrice.at(i).at(colPivot);
+				lignePlusPetit = matrice.at(i).at(*nbCouverture + *nbPlaques) / matrice.at(i).at(colPivot);
 
 			}
 
 		}
 
+
 		// pivotage
-		// diviser chaque membre de la ligne du pivot par le pivot
+
+
 		pivot = matrice.at(lignePivot).at(colPivot);
-		for (int col = 0; col < matrice.at(0).size(); col++) {
-
-			matrice.at(lignePivot).at(col) /= pivot;
-
-		}
 
 
 		// calcul des nouvelles cases de la matrice
 		for (int ligne = 0; ligne < matrice.size(); ligne++) {
-			for (int col = 0; col < matrice.at(0).size(); col++) {
-				if (ligne != lignePivot && col != colPivot) {
-					matrice.at(ligne).at(col) -=
-						((matrice.at(lignePivot).at(col) * matrice.at(ligne).at(colPivot))
-							/ matrice.at(lignePivot).at(colPivot));
+			if (ligne != lignePivot) {
+
+				for (int col = 0; col < matrice.at(0).size(); col++) {
+
+					// case = case - (element ligne pivot * (element Colonne pivot / pivot))
+					if (
+						col != colPivot)
+					{
+
+						float step1 = matrice.at(ligne).at(colPivot) / pivot;
+
+						float step2 = matrice.at(lignePivot).at(col) * step1;
+
+						matrice.at(ligne).at(col) -= (step2);
+
+					}
 				}
 			}
+		}
+
+		// diviser chaque membre de la ligne du pivot par le pivot
+		for (int lig = 0; lig < matrice.size(); lig++) {
+
+			matrice.at(lig).at(colPivot) /= pivot;
+
 		}
 
 		// mise a zero de chaque membre de la colonne du pivot, sauf le pivot
@@ -414,27 +436,39 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 			}
 		}
 
+
+
 	}
+
 	// on a la matrice optimale, on extrait les valeurs souhaitées
+
+	// extrait les impressions par plaque
+	for (int i = 0; i < *nbPlaques; i++) {
+		nbImpressions->at(i) = ceil(matrice.at(*nbPlaques).at(*nbCouverture + i));
+	}
+
+	// extrait le nombre d'impressions totales
+	*totalImpression = ceil(matrice.at(*nbPlaques).at(*nbCouverture + *nbPlaques));
+
 
 }
 
-bool estOptimal(std::vector<std::vector<float>> *matrice, unsigned char *nbCouverture) {
+bool estOptimal(std::vector<std::vector<float>> *matrice) {
 	// la matrice est optimale quand aucun element de la dernière ligne n'est inferieur a zero
-	for (int i =0;i< matrice->at(*nbCouverture).size();i++)
+	for (int col = 0;col < matrice->at(0).size(); col++)
 	{
-		if (matrice->at(*nbCouverture).at(i) < 0) return false;
+		if (matrice->at(matrice->size()-1).at(col) < 0) return false;
 	
 	}
 	return true;
 }
 
 
-void show(std::vector<std::vector<float>> matrice) {
+void show(std::vector<std::vector<float>> *matrice) {
 	// cette fonction affiche la matrice
-	for (int ligne = 0; ligne < matrice.size(); ligne++) {
-		for (int col = 0; col < matrice[0].size(); col++) {
-			std::cout << matrice[ligne][col] << " ";
+	for (int ligne = 0; ligne < matrice->size(); ligne++) {
+		for (int col = 0; col < matrice->at(0).size(); col++) {
+			std::cout << matrice->at(ligne).at(col) << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -571,6 +605,7 @@ void thread(Solution* current,Entree* entree)
 	std::vector<unsigned int> impressionsBis;
 	float coutBis = 0.0;
 	int i = 0;
+	unsigned int totalImpression = 0;
 	impressionsBis.assign(current->nbPlaques, 0);
 
 	do {
@@ -584,8 +619,8 @@ void thread(Solution* current,Entree* entree)
 
 
 	// calcule le cout de ce nouvel agencement
-	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques, &entree->nbCouverture, &entree->nbEmplacement);
-	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree->nbEmplacement, &coutBis, &entree->coutImpression, &entree->coutFabrication);
+	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques,&totalImpression, &entree->nbCouverture, &entree->nbEmplacement);
+	calculCout( &current->nbPlaques, &entree->nbEmplacement, &totalImpression, &coutBis, &entree->coutImpression, &entree->coutFabrication);
 
 
 	// compare, garde le meilleur

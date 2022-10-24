@@ -26,10 +26,10 @@ struct Solution {
 bool lecture(Entree* entree, std::string input);
 bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short int* nbDataset);
 
-void calculCout(std::vector<unsigned char>* agencement,
-	std::vector<unsigned int>* nbImpression,
+void calculCout(
 	unsigned short int* nbPlaques,
 	unsigned char* nbEmplacement,
+	unsigned int *stotalImpression,
 	float* coutTotal,
 	float* coutImpression,
 	float* coutFabrication);
@@ -38,8 +38,11 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	std::vector<unsigned int>* nbImpressions,
 	std::vector<unsigned int>* nbImpressionsParCouv,
 	unsigned short int* nbPlaques,
+	unsigned int *totalImpression,
 	unsigned char* nbCouverture,
 	unsigned char* nbEmplacement);
+
+
 
 
 void init(Solution* current, unsigned char* nbEmplacements);
@@ -50,5 +53,6 @@ void SwitchAgencement(Solution* current);
 void thread(Solution* current, Entree* entree);
 
 // fonctions de linProg
-bool estOptimal(std::vector<std::vector<float>>* matrice, unsigned char* nbCouverture);
+bool estOptimal(std::vector<std::vector<float>>* matrice);
+void show(std::vector<std::vector<float>> *matrice);
 //void show(std::vector<std::vector<float>> matrice);
