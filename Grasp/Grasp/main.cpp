@@ -106,6 +106,8 @@ int main(int argc, char* argv[])
 
 
 	try {
+		//prevent non-random behavior
+		if (NBTHREADS >= NBCANDIDATES) throw 123;
 
 		// recuperation des donnees dans le fichier en entree
 		std::cout << "Quel dataset a tester ? : ";
@@ -327,6 +329,10 @@ int main(int argc, char* argv[])
 		}
 		if (e == 99) {
 			std::cout << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
+		}
+		if (e == 123)
+		{
+			std::cout << "The number of threads needs to exeed the number of candidates" << std::endl;
 		}
 		else
 		{
