@@ -354,7 +354,9 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 	while(!estOptimal()){
 		// choix colonne pivot
 
+
 		// choix ligne pivot
+
 
 		// pivotage
 		// diviser chaque membre de la ligne du pivot par le pivot
@@ -370,14 +372,18 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 
 	}
-	// on a la matrice optimale, on extrait les valeurs souhaitée
+	// on a la matrice optimale, on extrait les valeurs souhaitées
 
 }
 
-bool estOptimal(std::vector<std::vector<float>> matrice) {
+bool estOptimal(std::vector<std::vector<float>> *matrice, unsigned char *nbCouverture) {
 	// la matrice est optimale quand aucun element de la dernière ligne n'est inferieur a zero
-	matrice.at();
-	return 0;
+	for each (float element in matrice->at(*nbCouverture))
+	{
+		if (element < 0) return false;
+	
+	}
+	return true;
 }
 
 
