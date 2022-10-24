@@ -26,10 +26,12 @@ struct Solution {
 bool lecture(Entree* entree, std::string input);
 bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short int* nbDataset);
 
+
 void calculCout(
+	std::vector<unsigned int>* nbImpressions,
 	unsigned short int* nbPlaques,
 	unsigned char* nbEmplacement,
-	unsigned int *stotalImpression,
+	unsigned int* totalImpression,
 	float* coutTotal,
 	float* coutImpression,
 	float* coutFabrication);

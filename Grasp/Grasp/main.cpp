@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
 				&entree.nbCouverture, 
 				&entree.nbEmplacement);
 			calculCout(
+				&listCandidats[i].nbImpression,
 				&listCandidats[candidat].nbPlaques, 
 				&entree.nbEmplacement,
 				&totalImpression,
@@ -192,6 +193,7 @@ int main(int argc, char* argv[])
 						&entree.nbCouverture,
 						&entree.nbEmplacement);
 					calculCout(
+						&listCandidats[i].nbImpression,
 						&listCandidats[i].nbPlaques,
 						&entree.nbEmplacement,
 						&totalImpression,
@@ -200,7 +202,12 @@ int main(int argc, char* argv[])
 						&entree.coutFabrication);
 					listCandidats[i].actif = true;
 					nbTotCandidats++;
-
+					if (totalImpression < 9000) {
+						for (int j = 0; j < listCandidats[i].agencement.size(); j++) {
+							std::cout << (int)listCandidats[i].agencement[j] << " ";
+						}
+						std::cout << std::endl;
+					}
 
 					// si meilleur, remplace le meilleur actuel
 					if (listCandidats[i].coutTotal < best.coutTotal) {
@@ -289,7 +296,6 @@ int main(int argc, char* argv[])
 /// <summary>
 /// calcul du cout de production du candidat
 /// </summary>
-/// <param name="agencement"></param>
 /// <param name="nbImpression"></param>
 /// <param name="nbPlaques"></param>
 /// <param name="nbEmplacement"></param>
@@ -297,6 +303,7 @@ int main(int argc, char* argv[])
 /// <param name="coutImpression"></param>
 /// <param name="coutFabrication"></param>
 void calculCout(
+	std::vector<unsigned int>* nbImpressions,
 	unsigned short int* nbPlaques,
 	unsigned char* nbEmplacement,
 	unsigned int *totalImpression,
@@ -305,7 +312,12 @@ void calculCout(
 	float* coutFabrication) {
 
 	*totalImpression = 0;
-
+	for (unsigned int i = 0; i < *nbPlaques; i++) {
+		*totalImpression += nbImpressions->at(i);
+		std::cout << nbImpressions->at(i) << " ";
+	}
+	std::cout << *totalImpression << std::endl;
+	
 
 	*coutTotal = (*totalImpression * *coutImpression) + (*nbPlaques * *coutFabrication);
 }
@@ -487,6 +499,7 @@ bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* 
 		// boucle dans toutes les cases
 		for (unsigned int valeur : *agencement)
 		{
+			if (valeur >= *nbCouverture) return false;
 			checkApparationNombre[valeur] = true;
 		}
 
@@ -620,8 +633,14 @@ void thread(Solution* current,Entree* entree)
 
 	// calcule le cout de ce nouvel agencement
 	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques,&totalImpression, &entree->nbCouverture, &entree->nbEmplacement);
-	calculCout( &current->nbPlaques, &entree->nbEmplacement, &totalImpression, &coutBis, &entree->coutImpression, &entree->coutFabrication);
+	calculCout(&current->nbImpression, &current->nbPlaques, &entree->nbEmplacement, &totalImpression, &coutBis, &entree->coutImpression, &entree->coutFabrication);
 
+	if (totalImpression < 9000) {
+		for (int j = 0; j < current->agencement.size(); j++) {
+			std::cout << (int)&current->agencement[j] << " ";
+		}
+		std::cout << std::endl;
+	}
 
 	// compare, garde le meilleur
 	if (coutBis < current->coutTotal) {
