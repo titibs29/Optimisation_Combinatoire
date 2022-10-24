@@ -10,11 +10,16 @@
 #include <semaphore>
 #include <mutex>
 
+#define PRINTLN(string) (std::cout << string << std::endl)
+#define PRINT(string) (std::cout << string)
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 // parametres
 #define RUNTIME 60				// temps de la boucle (secondes)
-#define NBCANDIDATES 10			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
+#define NBCANDIDATES 20			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
 #define NBITERLOCAL 10000			// nombre d'iteration locale
-#define NBTHREADS 5				// nombre de threads
+#define NBTHREADS 8 // nombre de threads, utilisé std::thread::hardware_concurrency() pour utilisé le nombre de threads sur la machine
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
@@ -104,6 +109,8 @@ int main(int argc, char* argv[])
 	// gestion du temps
 	std::chrono::time_point<std::chrono::system_clock> start;
 
+	PRINT("Number of threads used to compute : ");
+	PRINTLN(NBTHREADS);
 
 	try {
 		//prevent non-random behavior
@@ -546,17 +553,19 @@ void thread(Solution* current, Entree entree)
 		float coutBis = 0.0;
 		int i = 0;
 
-
 		impressionsBis.assign(current->nbPlaques, 0);
 
-		do {
+		do 
+		{
 			agencementBis.assign(current->agencement.begin(), current->agencement.end());
 
-			for (i = rand() % agencementBis.size() + 1; i > 0; i--) {
+			for (i = rand() % agencementBis.size() + 1; i > 0; i--) 
+			{
 				agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
 			}
 
-		} while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
+		} 
+		while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
 
 		
 		// calcule le cout de ce nouvel agencement
@@ -564,30 +573,31 @@ void thread(Solution* current, Entree entree)
 		calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
 
 		// compare, garde le meilleur
-		if (coutBis < current->coutTotal) {
-
+		if (coutBis < current->coutTotal)
+		{
 			current->agencement.assign(agencementBis.begin(), agencementBis.end());
 			current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
 			current->coutTotal = coutBis;
 		}
 
-		//lock mutex for best
-		best_mtx.lock();
-
-		// si meilleur, remplace le meilleur actuel
-		if (current->coutTotal < best.coutTotal)
-		{
-			newBest += 1;   // stat
-			best.nbPlaques = current->nbPlaques;
-			best.agencement.assign(current->agencement.begin(), current->agencement.end());
-			best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
-			best.coutTotal = current->coutTotal;
-		}
-
-		//unlock mutex for best
-		best_mtx.unlock();
-		
 	}
+
+	//lock mutex for best
+	best_mtx.lock();
+
+	// si meilleur, remplace le meilleur actuel
+	if (current->coutTotal < best.coutTotal)
+	{
+		newBest += 1;   // stat
+		best.nbPlaques = current->nbPlaques;
+		best.agencement.assign(current->agencement.begin(), current->agencement.end());
+		best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
+		best.coutTotal = current->coutTotal;
+	}
+
+	//unlock mutex for best
+	best_mtx.unlock();
+
 	//lock mutex for stat variables
 	stat_variables_mtx.lock();
 
@@ -604,7 +614,7 @@ void thread(Solution* current, Entree entree)
 /// lis le fichier en entree
 /// </summary>
 /// <param name="entree"> structure en entree de l'algo</param>
-/// <param name="nbDataset"> numero de dataset</param>
+/// <parjam name="nbDataset"> numero de dataset</param>
 bool lecture(Entree* entree, std::string input) {
 
 
@@ -623,7 +633,6 @@ bool lecture(Entree* entree, std::string input) {
 		}
 		// on en à plus besoin
 		fichier.close();
-
 
 		// on redistribue proprement
 		entree->nbCouverture = stoi(inputData[0]);
