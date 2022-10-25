@@ -430,7 +430,7 @@ bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* 
 		// boucle dans toutes les cases
 		for (unsigned int valeur : *agencement)
 		{
-			checkApparationNombr.at(valeur) = true;
+			checkApparationNombre.at(valeur) = true;
 		}
 
 		// verifie si tout les nombres sont present
