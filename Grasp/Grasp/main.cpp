@@ -1,18 +1,70 @@
 // main.cpp : Ce fichier contient la fonction 'main'. L'exécution du programme commence et se termine à cet endroit.
 //
 
-#include "main.h"
+#include <iostream>
+#include <fstream>
+#include <vector>  
+#include <string>
+#include <chrono>
+#include <thread>
+#include <semaphore>
+#include <mutex>
+
+#define PRINTLN(string) (std::cout << string << std::endl)
+#define PRINT(string) (std::cout << string)
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 // parametres
-#define RUNTIME 15				// temps de la boucle (secondes)
-#define NBCANDIDATES 10			// nombre de candidats 
-#define NBITERLOCAL 100			// nombre d'iteration locale
-#define NBTHREADS 4				// (useless)nombre de threads
+#define RUNTIME 60				// temps de la boucle (secondes)
+#define NBCANDIDATES 20			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
+#define NBITERLOCAL 10000			// nombre d'iteration locale
+#define NBTHREADS 8 // nombre de threads, utilisé std::thread::hardware_concurrency() pour utilisé le nombre de threads sur la machine
 #define CHANCESMOINSPLAQUES 80	// en pourcent les chances d'avoir moins de plaques que le meilleur resultat dans le candidat
 #define PARTAVIRER 0.5			// sur 1, la quantité du pool de candidats à remplacer
 
+//MULTITHREADING
+std::vector<std::thread> threads;
+
+std::mutex stat_variables_mtx;
+std::mutex best_mtx;
 
 
+struct Entree {
+	unsigned char nbCouverture = 0;		// max 125
+	unsigned char nbEmplacement = 0;	// max 25
+	std::vector<unsigned int> nbImpressionParCouverture;
+	float coutImpression = 0.0;
+	float coutFabrication = 0.0;
+};
+
+struct Solution {
+	unsigned short int nbPlaques = 0;
+	std::vector<unsigned int> nbImpression;
+	std::vector<unsigned char> agencement; // max 125
+	float coutTotal = FLT_MAX;
+	bool actif = true;
+	bool isUsedInThread = false;
+};
+
+
+
+void init(Solution* current, unsigned char* nbEmplacements);
+void generationPlaques(Solution* current, std::vector<float> *poidsImpression, unsigned char* nbCouverture, unsigned char* nbEmplacement);
+void TableauPoids(std::vector<unsigned int>* nbImpression, std::vector<float>* poidsImpression);
+
+void SwitchAgencement(Solution* current);
+void thread(Solution* current, Entree entree);
+void joinAllThreads(void);
+
+
+unsigned long int iterations = 0;
+unsigned long int plaquesGenerees = 0;
+unsigned long int newBest = 0;
+
+Entree entree;
+Solution best;
+Solution listCandidats[NBCANDIDATES];
 
 
 
@@ -29,24 +81,23 @@ int main(int argc, char* argv[])
 	unsigned int nbImpressions = 0;
 	unsigned int pireIndice = 0;
 	unsigned int random = 0;
-	unsigned long int iterations = 0;
-	unsigned long int plaquesGenerees = 0;
-	unsigned long int newBest = 0;
 	unsigned long int nbTotCandidats = 0;
 	unsigned long int microseconds = 0;     // duree
 	bool err = false;
 	float pireCout = 0.0;
 	std::vector<float> poidsImpression;
-	Entree entree;
-	Solution best;
-	Solution listCandidats[NBCANDIDATES];
+	
 	best.coutTotal = FLT_MAX;				//attribution de la valeur la plus importante possible a best
 
 	// gestion du temps
 	std::chrono::time_point<std::chrono::system_clock> start;
 
+	PRINT("Number of threads used to compute : ");
+	PRINTLN(NBTHREADS);
 
 	try {
+		//prevent non-random behavior
+		if (NBTHREADS >= NBCANDIDATES) throw 123;
 
 		// recuperation des donnees dans le fichier en entree
 		std::cout << "Quel dataset a tester ? : ";
@@ -115,23 +166,23 @@ int main(int argc, char* argv[])
 
 
 		/* CHANGEMENTS LOCAUX */
-		for (i = 0; i < NBITERLOCAL; i++) {
+		for (int i = 0; i <  NBTHREADS; i++)
+		{
+			int r;
+			do
+			{
+				r = rand() % NBCANDIDATES;
+			} while (listCandidats[r].isUsedInThread);
 
-			random = rand() % NBCANDIDATES;
-			thread(&listCandidats[random], &entree);
-			iterations++;    // stat
-			plaquesGenerees++;   // stat
+			//Reserve candidate for not being chosen in another thread
+			listCandidats[r].isUsedInThread = true;
 
-			// si meilleur, remplace le meilleur actuel
-			if (listCandidats[random].coutTotal < best.coutTotal) {
-
-				newBest += 1;   // stat
-				best.nbPlaques = listCandidats[random].nbPlaques;
-				best.agencement.assign(listCandidats[random].agencement.begin(), listCandidats[random].agencement.end());
-				best.nbImpression.assign(listCandidats[random].nbImpression.begin(), listCandidats[random].nbImpression.end());
-				best.coutTotal = listCandidats[random].coutTotal;
-			}
+			//starting all threads
+			threads.push_back(std::thread(thread, &listCandidats[r], entree));
 		}
+		//wait for all threads to finish executing
+		joinAllThreads();
+		
 
 
 		/*---LOOP---*/
@@ -211,25 +262,25 @@ int main(int argc, char* argv[])
 			}
 
 
-			/* CHANGEMENT LOCAUX */
-			for (i = 0; i < NBITERLOCAL; i++) {
+			
+			/* CHANGEMENTS LOCAUX */
+			for (int i = 0; i < NBTHREADS; i++)
+			{
+				int r;
+				do
+				{
+					r = rand() % NBCANDIDATES;
+				} while (listCandidats[r].isUsedInThread);
 
-				random = rand() % NBCANDIDATES;
-				thread(&listCandidats[random], &entree);
-				iterations += 1;    // stat
-				plaquesGenerees++;   // stat
+				//Reserve candidate for not being chosen in another thread
+				listCandidats[r].isUsedInThread = true;
 
-				// si meilleur, remplace le meilleur actuel
-				if (listCandidats[random].coutTotal < best.coutTotal) {
-
-					newBest += 1;   // stat
-					best.nbPlaques = listCandidats[random].nbPlaques;
-					best.agencement.assign(listCandidats[random].agencement.begin(), listCandidats[random].agencement.end());
-					best.nbImpression.assign(listCandidats[random].nbImpression.begin(), listCandidats[random].nbImpression.end());
-					best.coutTotal = listCandidats[random].coutTotal;
-				}
-
+				//starting all threads
+				threads.push_back(std::thread(thread, &listCandidats[r], entree));
 			}
+			//wait for all threads to finish executing
+			joinAllThreads();
+			
 
 
 			// se finit si le temps depuis start est egal ou superieur a 60 secondes
@@ -269,6 +320,10 @@ int main(int argc, char* argv[])
 		if (e == 99) {
 			std::cout << "erreur lors de l'ecriture du fichier de sortie" << std::endl;
 		}
+		if (e == 123)
+		{
+			std::cout << "The number of threads needs to exeed the number of candidates" << std::endl;
+		}
 		else
 		{
 			std::cout << "erreur inconnue" << std::endl;
@@ -295,6 +350,8 @@ void calculCout(std::vector<unsigned char>* agencement,
 	float* coutFabrication) {
 
 	unsigned int totImpressions = 0;
+
+
 	for (unsigned int i = 0; i < *nbPlaques; i++) {
 		totImpressions += nbImpression->at(i);
 	}
@@ -331,9 +388,12 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	// determination du nombre de passage minimum par chaque plaque
 	for (unsigned int plaque = 0; plaque < *nbPlaques; plaque++) {
-		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) {
-			if (nbImpressions->at(plaque) < bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)]) {
-				nbImpressions->at(plaque) = bufferIteration[agencement->at((plaque * (*nbEmplacement)) + emplacement)];
+		for (unsigned int emplacement = 0; emplacement < *nbEmplacement; emplacement++) 
+		{
+			int o = plaque * (*nbEmplacement) + emplacement;
+			if (nbImpressions->at(plaque) < bufferIteration.at(agencement->at(o)))
+			{
+				nbImpressions->at(plaque) = bufferIteration.at(agencement->at(o));
 			}
 		}
 	}
@@ -380,7 +440,7 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 		for (unsigned int j = 0; j < *nbEmplacement; j++) {
 
 			// peuplement des deux premiers
-			if (poidsImpression[1] < poidsImpression[0]) {
+			if (poidsImpression->at(1) < poidsImpression->at(0)) {
 				c1 = 0;
 				c2 = 1;
 			}
@@ -463,45 +523,81 @@ void SwitchAgencement(Solution* current) {
     
 }
 
-
-void thread(Solution* current,Entree* entree)
+//    /!\ 'Current' must be in one thread at a time
+void thread(Solution* current, Entree entree)
 {
-	// crée un nouvel agencement
-	std::vector<unsigned char> agencementBis;
-	std::vector<unsigned int> impressionsBis;
-	float coutBis = 0.0;
-	int i = 0;
-	impressionsBis.assign(current->nbPlaques, 0);
+	/* CHANGEMENT LOCAUX */
+	//'w' is not used inside the for loop.
+	for (int w = 0; w < NBITERLOCAL; w++)
+	{
+		// crée un nouvel agencement
+		std::vector<unsigned char> agencementBis;
+		std::vector<unsigned int> impressionsBis;
+		float coutBis = 0.0;
+		int i = 0;
 
-	do {
-		agencementBis.assign(current->agencement.begin(), current->agencement.end());
+		impressionsBis.assign(current->nbPlaques, 0);
 
-		for (i= rand() % agencementBis.size()+1; i > 0; i--) {
-			agencementBis[rand() % agencementBis.size()] = (rand() % entree->nbCouverture);
+		do 
+		{
+			agencementBis.assign(current->agencement.begin(), current->agencement.end());
+
+			for (i = rand() % agencementBis.size() + 1; i > 0; i--) 
+			{
+				agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
+			}
+
+		} 
+		while (!checkValiditePlaque(&agencementBis, &entree.nbCouverture));
+
+		
+		// calcule le cout de ce nouvel agencement
+		impressionParPlaque(&agencementBis, &impressionsBis, &entree.nbImpressionParCouverture, &current->nbPlaques, &entree.nbCouverture, &entree.nbEmplacement);
+		calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree.nbEmplacement, &coutBis, &entree.coutImpression, &entree.coutFabrication);
+
+		// compare, garde le meilleur
+		if (coutBis < current->coutTotal)
+		{
+			current->agencement.assign(agencementBis.begin(), agencementBis.end());
+			current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
+			current->coutTotal = coutBis;
 		}
 
-	} while (!checkValiditePlaque(&agencementBis, &entree->nbCouverture));
-
-
-	// calcule le cout de ce nouvel agencement
-	impressionParPlaque(&agencementBis, &impressionsBis, &entree->nbImpressionParCouverture, &current->nbPlaques, &entree->nbCouverture, &entree->nbEmplacement);
-	calculCout(&agencementBis, &impressionsBis, &current->nbPlaques, &entree->nbEmplacement, &coutBis, &entree->coutImpression, &entree->coutFabrication);
-
-
-	// compare, garde le meilleur
-	if (coutBis < current->coutTotal) {
-
-		current->agencement.assign(agencementBis.begin(), agencementBis.end());
-		current->nbImpression.assign(impressionsBis.begin(), impressionsBis.end());
-		current->coutTotal = coutBis;
 	}
+
+	//lock mutex for best
+	best_mtx.lock();
+
+	// si meilleur, remplace le meilleur actuel
+	if (current->coutTotal < best.coutTotal)
+	{
+		newBest += 1;   // stat
+		best.nbPlaques = current->nbPlaques;
+		best.agencement.assign(current->agencement.begin(), current->agencement.end());
+		best.nbImpression.assign(current->nbImpression.begin(), current->nbImpression.end());
+		best.coutTotal = current->coutTotal;
+	}
+
+	//unlock mutex for best
+	best_mtx.unlock();
+
+	//lock mutex for stat variables
+	stat_variables_mtx.lock();
+
+	iterations+= NBITERLOCAL;    // stat
+	plaquesGenerees+= NBITERLOCAL;   // stat
+
+	//unlock mutex for stat variables
+	stat_variables_mtx.unlock();
+	//free candidate
+	current->isUsedInThread = false;
 }
 
 /// <summary>
 /// lis le fichier en entree
 /// </summary>
 /// <param name="entree"> structure en entree de l'algo</param>
-/// <param name="nbDataset"> numero de dataset</param>
+/// <parjam name="nbDataset"> numero de dataset</param>
 bool lecture(Entree* entree, std::string input) {
 
 
@@ -520,7 +616,6 @@ bool lecture(Entree* entree, std::string input) {
 		}
 		// on en à plus besoin
 		fichier.close();
-
 
 		// on redistribue proprement
 		entree->nbCouverture = stoi(inputData[0]);
@@ -582,4 +677,13 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 		return 1;
 	}
 
+}
+
+void joinAllThreads()
+{
+	while (!threads.empty())
+	{
+		threads.front().join();
+		threads.erase(threads.begin());
+	}
 }
