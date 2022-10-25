@@ -16,7 +16,7 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 // parametres
-#define RUNTIME 10			// temps de la boucle (secondes)
+#define RUNTIME 60			// temps de la boucle (secondes)
 #define NBCANDIDATES 20			// nombre de candidats /!\ MUST BE HIGHER THAN NUMBER OF THREADS
 #define NBITERLOCAL 10000			// nombre d'iteration locale
 #define NBTHREADS 8 // nombre de threads, utilisé std::thread::hardware_concurrency() pour utilisé le nombre de threads sur la machine
@@ -366,7 +366,7 @@ void calculCout(std::vector<unsigned char>* agencement,
 	float* coutImpression,
 	float* coutFabrication) {
 
-	unsigned int totImpressions = 0;
+	unsigned long totImpressions = 0;
 
 
 	for (unsigned int i = 0; i < *nbPlaques; i++) {
@@ -395,12 +395,12 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	// lecture du nombre d'iteration de chaque couverture dans les agencements
 	for (unsigned int i = 0; i < agencement->size(); i++) {
-		bufferIteration[agencement->at(i)] += 1;
+		bufferIteration.at(agencement->at(i)) += 1;
 	}
 
 	// division du nombre d'impression par le nombre d'iteration
 	for (unsigned int i = 0; i < bufferIteration.size(); i++) {
-		bufferIteration[i] = ceil(nbImpressionsParCouv->at(i) / bufferIteration[i]);
+		bufferIteration.at(i) = ceil(nbImpressionsParCouv->at(i) / bufferIteration.at(i));
 	}
 
 	// determination du nombre de passage minimum par chaque plaque
@@ -430,7 +430,7 @@ bool checkValiditePlaque(std::vector<unsigned char>* agencement, unsigned char* 
 		// boucle dans toutes les cases
 		for (unsigned int valeur : *agencement)
 		{
-			checkApparationNombre[valeur] = true;
+			checkApparationNombr.at(valeur) = true;
 		}
 
 		// verifie si tout les nombres sont present
@@ -479,11 +479,11 @@ void generationPlaques(Solution* current, std::vector<float>* poidsImpression, u
 				}
 			}
 			if (rand() % 2) {
-				current->agencement[(i * (*nbEmplacement)) + j] = c2;
+				current->agencement.at((i * (*nbEmplacement)) + j) = c2;
 				poidsImpression->at(c2) -= reduction;
 			}
 			else {
-				current->agencement[(i * (*nbEmplacement)) + j] = c1;
+				current->agencement.at((i * (*nbEmplacement)) + j) = c1;
 				poidsImpression->at(c1) -= reduction;
 			}
 		}
@@ -561,7 +561,7 @@ void thread(Solution* current, Entree entree)
 
 			for (i = rand() % agencementBis.size() + 1; i > 0; i--) 
 			{
-				agencementBis[rand() % agencementBis.size()] = (rand() % entree.nbCouverture);
+				agencementBis.at(rand() % agencementBis.size()) = (rand() % entree.nbCouverture);
 			}
 
 		} 
@@ -635,12 +635,12 @@ bool lecture(Entree* entree, std::string input) {
 		fichier.close();
 
 		// on redistribue proprement
-		entree->nbCouverture = stoi(inputData[0]);
-		entree->nbEmplacement = stoi(inputData[1]);
+		entree->nbCouverture = stoi(inputData.at(0));
+		entree->nbEmplacement = stoi(inputData.at(1));
 
 		// on boucle pour toutes les impressions
 		for (unsigned int ligne = 0; ligne < inputData.size() - 3; ligne++) {
-			entree->nbImpressionParCouverture.push_back(stoi(inputData[ligne + 2]));
+			entree->nbImpressionParCouverture.push_back(stoi(inputData.at(ligne + 2)));
 		}
 
 		// on subdivise la dernière ligne
@@ -673,11 +673,11 @@ bool ecriture(Solution* solution, unsigned char* nbEmplacement, unsigned short i
 
 		// les impressions pour chaque plaque
 		for (unsigned int i = 0; i < solution->nbImpression.size(); i++)
-			fichier << solution->nbImpression[i] << std::endl;
+			fichier << solution->nbImpression.at(i) << std::endl;
 
 		// les agencements de chaque plaque
 		for (unsigned int i = 0; i < solution->agencement.size(); i++) {
-			fichier << (int)solution->agencement[i];
+			fichier << (int)solution->agencement.at(i);
 			if (i % *nbEmplacement == (*nbEmplacement - 1)) fichier << std::endl;
 			else fichier << ", ";
 		}
