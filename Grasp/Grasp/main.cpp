@@ -308,6 +308,7 @@ int main(int argc, char* argv[])
 		std::cout << "nombre de plaques differentes generees: " << plaquesGenerees << std::endl;
 		std::cout << "nombre de nouveau best realise: " << newBest << std::endl;
 		std::cout << "nombre de candidats crees: " << nbTotCandidats << std::endl;
+		std::cout << "nombre /sec: " << plaquesGenerees/60 << std::endl;
 
 
 
