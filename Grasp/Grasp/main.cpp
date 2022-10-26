@@ -401,7 +401,7 @@ void impressionParPlaque(std::vector<unsigned char>* agencement,
 
 	// division du nombre d'impression par le nombre d'iteration
 	for (unsigned int i = 0; i < bufferIteration.size(); i++) {
-		bufferIteration.at(i) = ceil(nbImpressionsParCouv->at(i) / bufferIteration.at(i));
+		bufferIteration.at(i) = ceil((float)nbImpressionsParCouv->at(i) / (float)bufferIteration.at(i));
 	}
 
 	// determination du nombre de passage minimum par chaque plaque
@@ -647,7 +647,7 @@ bool lecture(Entree* entree, std::string input) {
 		// on subdivise la dernière ligne
 		int taillePremier = inputData.back().find(" ");
 		entree->coutImpression = stof(inputData.back().substr(0, taillePremier));
-		entree->coutFabrication = stof(inputData.back().substr(taillePremier + 1, inputData.back().find(" ")));
+		entree->coutFabrication = stof(inputData.back().substr(taillePremier + 1, inputData.back().size()-1));
 
 		return 0;
 	}
