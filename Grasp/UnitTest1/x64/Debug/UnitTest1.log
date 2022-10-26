@@ -1,25 +1,40 @@
 ﻿  GraspTest.cpp
 C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(64,22): warning C4244: '=' : conversion de 'float' en 'unsigned short', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(444,30): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(459,30): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
           with
           [
               _Ty=unsigned int
           ]
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(448,25): warning C4244: '=' : conversion de 'float' en 'unsigned int', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(585,48): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(667,49): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(463,25): warning C4244: '=' : conversion de 'float' en 'unsigned int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(601,48): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(640,46): warning C4311: 'cast de type' : troncation de pointeur de '_Ty *' à 'int'
+          with
+          [
+              _Ty=unsigned char
+          ]
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(640,46): warning C4302: 'cast de type' : troncation de '_Ty *' à 'int'
+          with
+          [
+              _Ty=unsigned char
+          ]
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(689,49): warning C4267: 'initialisation' : conversion de 'size_t' en 'int', perte possible de données
 C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(72,1): warning C4305: '=' : troncation de 'double' à 'float'
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(288,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(289,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
           with
           [
               _Ty=unsigned int
           ]
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(433,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(434,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
           with
           [
               _Ty=unsigned int
           ]
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(579,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(580,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
+          with
+          [
+              _Ty=unsigned int
+          ]
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\UnitTest1\GraspTest.cpp(725,29): warning C4244: '=' : conversion de 'float' en '_Ty', perte possible de données
           with
           [
               _Ty=unsigned int
@@ -29,7 +44,7 @@ D:\Program Files\VisualStudio\22\community\VC\Tools\MSVC\14.32.31326\include\xut
           [
               _Ty=int
           ]
-C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(491): message : voir la référence à l'instanciation de la fonction modèle '__int64 std::count<std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,int>(const _InIt,const _InIt,const _Ty &)' en cours de compilation
+C:\Users\thiba\Documents\Ecole\Optimisation_Combinatoire\Grasp\Grasp\main.cpp(507): message : voir la référence à l'instanciation de la fonction modèle '__int64 std::count<std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,int>(const _InIt,const _InIt,const _Ty &)' en cours de compilation
           with
           [
               _InIt=std::_Vb_iterator<std::_Wrap_alloc<std::allocator<unsigned int>>>,
