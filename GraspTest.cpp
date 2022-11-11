@@ -1,7 +1,6 @@
-#include "pch.h"
+#include "GraspTest.h"
 #include "CppUnitTest.h"
-#include "../Grasp/main.h"
-#include "../Grasp/main.cpp"
+#include "../main.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
